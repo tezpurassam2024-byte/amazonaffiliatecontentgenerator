@@ -10,6 +10,7 @@ import {
 import { parseAmazonUrl, SAMPLE_PRODUCTS } from './src/lib/amazon';
 
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,10 +22,15 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
+  const hasKey = Boolean(
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.API_KEY
+  );
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    geminiConfigured: hasKey,
   });
 });
 
@@ -80,16 +86,30 @@ const handleGenerateContent = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Valid product name and details are required.' });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        error:
-          'GEMINI_API_KEY is not set in the server environment. Please configure it in your secrets/environment variables.',
-      });
-    }
-
     const generated = await generateAffiliateContent(
       product,
-      options,
+      options || {
+        review_length: 1200,
+        writing_style: 'Balanced & Consumer-Friendly',
+        target_audience: 'Everyday Consumers',
+        seo_intensity: 'Balanced',
+        keywords: { primary: product.product_name, secondary: [], long_tail: [] },
+        affiliate_tag: 'affiliate-20',
+        modules: {
+          seo_title: true,
+          review: true,
+          pros_cons: true,
+          specifications: true,
+          comparison: true,
+          faq: true,
+          meta_title: true,
+          meta_description: true,
+          image_caption: true,
+          schema_markup: true,
+          affiliate_disclosure: true,
+          social_media: true,
+        },
+      },
       extraComparisonProducts || []
     );
 
@@ -109,12 +129,6 @@ const handleRefineContent = async (req: Request, res: Response) => {
 
     if (!sectionText) {
       return res.status(400).json({ error: 'No section text provided to refine.' });
-    }
-
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        error: 'GEMINI_API_KEY is missing.',
-      });
     }
 
     const refinedText = await refineContentSection(
@@ -143,14 +157,18 @@ const handleRegenerateSection = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Section name and product data are required.' });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY is missing.' });
-    }
-
     const sectionData = await generateSingleSection(
       section,
       product,
-      options,
+      options || {
+        review_length: 1200,
+        writing_style: 'Balanced & Consumer-Friendly',
+        target_audience: 'Everyday Consumers',
+        seo_intensity: 'Balanced',
+        keywords: { primary: product.product_name, secondary: [], long_tail: [] },
+        affiliate_tag: 'affiliate-20',
+        modules: {},
+      },
       extraComparisonProducts || []
     );
 
