@@ -22,6 +22,7 @@ import {
   GeneratedProductImage,
   ArticleImageSlot,
 } from '../../types';
+import { requestProductImage } from '../../lib/clientImageGenerator';
 
 interface ProductImageStudioProps {
   product: AmazonProduct;
@@ -106,26 +107,16 @@ export const ProductImageStudio: React.FC<ProductImageStudioProps> = ({
     setGenerationError(null);
 
     try {
-      const response = await fetch('/api/generate-product-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUrl: sourceImageUrl.trim() || undefined,
-          productName: product.product_name,
-          brand: product.brand,
-          category: product.category,
-          style: selectedStyle,
-          aspectRatio,
-          customPrompt: customPrompt.trim() || undefined,
-        }),
+      const newImage = await requestProductImage({
+        imageUrl: sourceImageUrl.trim() || undefined,
+        productName: product.product_name,
+        brand: product.brand,
+        category: product.category,
+        style: selectedStyle,
+        aspectRatio,
+        customPrompt: customPrompt.trim() || undefined,
       });
 
-      const result = await response.json();
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to generate product image.');
-      }
-
-      const newImage: GeneratedProductImage = result.image;
       setActiveGeneratedImage(newImage);
 
       // Add to gallery
