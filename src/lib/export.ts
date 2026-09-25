@@ -28,10 +28,13 @@ export function generateFullMarkdown(
     md += `> **Affiliate Disclosure:** ${content.affiliate_disclosure}\n\n`;
   }
 
-  if (product.image_url) {
-    md += `![${content.image_seo?.alt_text || product.product_name}](${product.image_url})\n\n`;
-    if (content.image_seo?.caption) {
-      md += `*${content.image_seo.caption}*\n\n`;
+  const heroImage = content.images?.hero?.url || product.image_url;
+  if (heroImage) {
+    const alt = content.images?.hero?.alt_text || content.image_seo?.alt_text || product.product_name;
+    const caption = content.images?.hero?.caption || content.image_seo?.caption;
+    md += `![${alt}](${heroImage})\n\n`;
+    if (caption) {
+      md += `*${caption}*\n\n`;
     }
   }
 
@@ -43,6 +46,12 @@ export function generateFullMarkdown(
 
   if (review.key_features) {
     md += `## Key Features\n\n${review.key_features}\n\n`;
+  }
+
+  if (content.images?.features?.url) {
+    const alt = content.images.features.alt_text || `${product.product_name} features view`;
+    const caption = content.images.features.caption || `${product.product_name} in-action and features breakdown`;
+    md += `![${alt}](${content.images.features.url})\n\n*${caption}*\n\n`;
   }
 
   if (review.design_and_build) {
@@ -94,6 +103,12 @@ export function generateFullMarkdown(
     md += `## Alternatives to Consider\n\n${review.who_should_consider_alternatives}\n\n`;
   }
 
+  if (content.images?.verdict?.url) {
+    const alt = content.images.verdict.alt_text || `${product.product_name} verdict close-up`;
+    const caption = content.images.verdict.caption || `${product.product_name} final verdict summary`;
+    md += `![${alt}](${content.images.verdict.url})\n\n*${caption}*\n\n`;
+  }
+
   if (review.final_verdict) {
     md += `## Final Verdict\n\n${review.final_verdict}\n\n`;
   }
@@ -130,13 +145,15 @@ export function generateCleanHtml(
   }
   html += `  </header>\n\n`;
 
-  if (product.image_url) {
+  const heroImage = content.images?.hero?.url || product.image_url;
+  if (heroImage) {
     html += `  <figure class="featured-image">\n`;
-    html += `    <img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(
-      content.image_seo?.alt_text || product.product_name
+    html += `    <img src="${escapeHtml(heroImage)}" alt="${escapeHtml(
+      content.images?.hero?.alt_text || content.image_seo?.alt_text || product.product_name
     )}" loading="lazy" />\n`;
-    if (content.image_seo?.caption) {
-      html += `    <figcaption>${escapeHtml(content.image_seo.caption)}</figcaption>\n`;
+    const caption = content.images?.hero?.caption || content.image_seo?.caption;
+    if (caption) {
+      html += `    <figcaption>${escapeHtml(caption)}</figcaption>\n`;
     }
     html += `  </figure>\n\n`;
   }
@@ -158,6 +175,19 @@ export function generateCleanHtml(
     html += `  <section class="review-section">\n    <h2>Key Features</h2>\n    <p>${escapeHtml(
       review.key_features
     )}</p>\n  </section>\n\n`;
+  }
+
+  if (content.images?.features?.url) {
+    html += `  <figure class="features-image" style="margin: 20px 0;">\n`;
+    html += `    <img src="${escapeHtml(content.images.features.url)}" alt="${escapeHtml(
+      content.images.features.alt_text || `${product.product_name} features`
+    )}" style="max-width: 100%; border-radius: 8px;" loading="lazy" />\n`;
+    if (content.images.features.caption) {
+      html += `    <figcaption style="font-size: 0.85em; color: #64748b; font-style: italic; margin-top: 6px;">${escapeHtml(
+        content.images.features.caption
+      )}</figcaption>\n`;
+    }
+    html += `  </figure>\n\n`;
   }
 
   if (review.design_and_build) {
@@ -213,6 +243,19 @@ export function generateCleanHtml(
       )}</p>\n    </div>\n`;
     });
     html += `  </section>\n\n`;
+  }
+
+  if (content.images?.verdict?.url) {
+    html += `  <figure class="verdict-image" style="margin: 20px 0;">\n`;
+    html += `    <img src="${escapeHtml(content.images.verdict.url)}" alt="${escapeHtml(
+      content.images.verdict.alt_text || `${product.product_name} verdict`
+    )}" style="max-width: 100%; border-radius: 8px;" loading="lazy" />\n`;
+    if (content.images.verdict.caption) {
+      html += `    <figcaption style="font-size: 0.85em; color: #64748b; font-style: italic; margin-top: 6px;">${escapeHtml(
+        content.images.verdict.caption
+      )}</figcaption>\n`;
+    }
+    html += `  </figure>\n\n`;
   }
 
   if (review.final_verdict) {

@@ -32,6 +32,8 @@ import {
   ArticleStatus,
 } from '../../types';
 import { RichEditor } from './RichEditor';
+import { ArticleImageSlotCard } from './ArticleImageSlotCard';
+import { ProductImageStudio } from './ProductImageStudio';
 import { generateFullMarkdown } from '../../lib/export';
 import { trackEvent } from '../../lib/analytics';
 
@@ -70,6 +72,7 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
   const [activeTab, setActiveTab] = useState<
     | 'review'
     | 'titles'
+    | 'images'
     | 'pros_cons'
     | 'specs'
     | 'comparison'
@@ -79,6 +82,9 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
     | 'disclosure'
     | 'social'
   >('review');
+
+  const [studioTargetSlot, setStudioTargetSlot] = useState<'hero' | 'features' | 'verdict'>('hero');
+  const [showImageSpaces, setShowImageSpaces] = useState<boolean>(true);
 
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
@@ -271,6 +277,20 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('images')}
+          className={`flex shrink-0 items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
+            activeTab === 'images'
+              ? 'border-orange-600 text-orange-700 bg-orange-50/50'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-orange-500" /> AI Image Studio
+          {(content.images?.hero?.url || content.images?.features?.url || content.images?.verdict?.url) && (
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('titles')}
           className={`flex shrink-0 items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
             activeTab === 'titles'
@@ -372,34 +392,158 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
 
       {/* Active Tab Content Area */}
       <div className="p-6">
-        {/* Tab 1: Product Review Editor */}
+        {/* Tab 1: Product Review Editor with Designated Image Spaces */}
         {activeTab === 'review' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Full Article Editor ({options.review_length}-Word Review)
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Edit directly or use the AI action buttons (Improve, Shorten, Expand, Make More
-                  Human, SEO Boost)
-                </p>
+          <div className="space-y-6">
+            {/* Designated Article Image Spaces Section */}
+            <div className="rounded-2xl border border-slate-200 bg-linear-to-b from-slate-50 to-white p-5 shadow-xs">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+                    <ImageIcon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Designated Image Spaces in Review
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Paste image URLs or generate copyright-free studio visuals. Images automatically render in reader preview and export files.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStudioTargetSlot('hero');
+                      setActiveTab('images');
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-bold text-slate-950 shadow-xs hover:bg-orange-600 active:scale-95"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Open AI Image Studio</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowImageSpaces(!showImageSpaces)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    {showImageSpaces ? 'Collapse Spaces' : 'Expand Spaces'}
+                  </button>
+                </div>
               </div>
+
+              {showImageSpaces && (
+                <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                  <ArticleImageSlotCard
+                    slotId="hero"
+                    label="1. Hero Image Space"
+                    description="Appears directly under article headline"
+                    slotData={content.images?.hero}
+                    productName={product.product_name}
+                    defaultImageUrl={product.image_url}
+                    onUpdateSlot={(updated) =>
+                      onUpdateContent({
+                        ...content,
+                        images: {
+                          ...(content.images || {}),
+                          hero: updated,
+                        },
+                      })
+                    }
+                    onOpenStudio={(slot) => {
+                      setStudioTargetSlot(slot);
+                      setActiveTab('images');
+                    }}
+                  />
+
+                  <ArticleImageSlotCard
+                    slotId="features"
+                    label="2. Key Features Space"
+                    description="Appears inside the Features section"
+                    slotData={content.images?.features}
+                    productName={product.product_name}
+                    defaultImageUrl={product.image_url}
+                    onUpdateSlot={(updated) =>
+                      onUpdateContent({
+                        ...content,
+                        images: {
+                          ...(content.images || {}),
+                          features: updated,
+                        },
+                      })
+                    }
+                    onOpenStudio={(slot) => {
+                      setStudioTargetSlot(slot);
+                      setActiveTab('images');
+                    }}
+                  />
+
+                  <ArticleImageSlotCard
+                    slotId="verdict"
+                    label="3. Final Verdict Space"
+                    description="Appears with the concluding summary"
+                    slotData={content.images?.verdict}
+                    productName={product.product_name}
+                    defaultImageUrl={product.image_url}
+                    onUpdateSlot={(updated) =>
+                      onUpdateContent({
+                        ...content,
+                        images: {
+                          ...(content.images || {}),
+                          verdict: updated,
+                        },
+                      })
+                    }
+                    onOpenStudio={(slot) => {
+                      setStudioTargetSlot(slot);
+                      setActiveTab('images');
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
-            <RichEditor
-              value={content.raw_markdown || generateFullMarkdown(product, content, options.affiliate_tag)}
-              onChange={(newVal) =>
-                onUpdateContent({
-                  ...content,
-                  raw_markdown: newVal,
-                })
-              }
-              productName={product.product_name}
-              writingStyle={options.writing_style}
-              keywords={[options.keywords.primary, ...options.keywords.secondary]}
-            />
+            {/* Review Article Editor */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Full Article Editor ({options.review_length}-Word Review)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Edit directly or use the AI action buttons (Improve, Shorten, Expand, Make More
+                    Human, SEO Boost)
+                  </p>
+                </div>
+              </div>
+
+              <RichEditor
+                value={content.raw_markdown || generateFullMarkdown(product, content, options.affiliate_tag)}
+                onChange={(newVal) =>
+                  onUpdateContent({
+                    ...content,
+                    raw_markdown: newVal,
+                  })
+                }
+                productName={product.product_name}
+                writingStyle={options.writing_style}
+                keywords={[options.keywords.primary, ...options.keywords.secondary]}
+              />
+            </div>
           </div>
+        )}
+
+        {/* Tab: AI Image Studio */}
+        {activeTab === 'images' && (
+          <ProductImageStudio
+            product={product}
+            content={content}
+            onUpdateContent={onUpdateContent}
+            preselectedSlot={studioTargetSlot}
+          />
         )}
 
         {/* Tab 2: SEO Titles */}

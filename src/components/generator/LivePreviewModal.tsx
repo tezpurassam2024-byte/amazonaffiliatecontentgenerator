@@ -121,17 +121,17 @@ export const LivePreviewModal: React.FC<LivePreviewModalProps> = ({
               {title}
             </h1>
 
-            {/* Featured Image */}
-            {product.image_url && (
+            {/* Featured Hero Image */}
+            {(content.images?.hero?.url || product.image_url) && (
               <figure className="my-6">
                 <img
-                  src={product.image_url}
-                  alt={content.image_seo?.alt_text || product.product_name}
+                  src={content.images?.hero?.url || product.image_url}
+                  alt={content.images?.hero?.alt_text || content.image_seo?.alt_text || product.product_name}
                   className="max-h-80 w-full rounded-xl object-contain bg-slate-50 p-2"
                 />
-                {content.image_seo?.caption && (
+                {(content.images?.hero?.caption || content.image_seo?.caption) && (
                   <figcaption className="mt-2 text-center text-xs italic text-slate-500">
-                    {content.image_seo.caption}
+                    {content.images?.hero?.caption || content.image_seo?.caption}
                   </figcaption>
                 )}
               </figure>
@@ -168,6 +168,20 @@ export const LivePreviewModal: React.FC<LivePreviewModalProps> = ({
               <div className="my-6">
                 <h2 className="text-lg font-bold text-slate-900">Key Features & Highlights</h2>
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">{review.key_features}</p>
+                {content.images?.features?.url && (
+                  <figure className="my-4">
+                    <img
+                      src={content.images.features.url}
+                      alt={content.images.features.alt_text || 'Key Features'}
+                      className="max-h-72 w-full rounded-xl object-contain bg-slate-50 p-2"
+                    />
+                    {content.images.features.caption && (
+                      <figcaption className="mt-2 text-center text-xs italic text-slate-500">
+                        {content.images.features.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                )}
               </div>
             )}
 
@@ -270,6 +284,20 @@ export const LivePreviewModal: React.FC<LivePreviewModalProps> = ({
             {review.final_verdict && (
               <div className="my-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
                 <h2 className="text-lg font-bold text-slate-900">Final Editorial Verdict</h2>
+                {content.images?.verdict?.url && (
+                  <figure className="my-4">
+                    <img
+                      src={content.images.verdict.url}
+                      alt={content.images.verdict.alt_text || 'Final Verdict'}
+                      className="max-h-72 w-full rounded-xl object-contain bg-white p-2 border border-slate-200 mx-auto"
+                    />
+                    {content.images.verdict.caption && (
+                      <figcaption className="mt-2 text-center text-xs italic text-slate-500">
+                        {content.images.verdict.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                )}
                 <p className="mt-2 text-xs leading-relaxed text-slate-700">{review.final_verdict}</p>
                 <div className="mt-5">
                   <a

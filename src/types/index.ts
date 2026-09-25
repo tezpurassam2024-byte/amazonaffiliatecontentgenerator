@@ -140,6 +140,23 @@ export interface GeneratedSocialPosts {
   youtube_community: string;
 }
 
+export interface ArticleImageSlot {
+  id: 'hero' | 'features' | 'verdict';
+  label: string;
+  url?: string;
+  caption?: string;
+  alt_text?: string;
+}
+
+export interface GeneratedProductImage {
+  id: string;
+  url: string;
+  prompt: string;
+  style: string;
+  created_at: string;
+  source_image_url?: string;
+}
+
 export interface GeneratedArticleContent {
   seo_titles?: GeneratedSEOTitles;
   review?: GeneratedReview;
@@ -167,6 +184,12 @@ export interface GeneratedArticleContent {
   affiliate_disclosure?: string;
   social_media?: GeneratedSocialPosts;
   raw_markdown?: string;
+  images?: {
+    hero?: ArticleImageSlot;
+    features?: ArticleImageSlot;
+    verdict?: ArticleImageSlot;
+  };
+  gallery?: GeneratedProductImage[];
 }
 
 export type ArticleStatus = 'Draft' | 'Generated' | 'Edited' | 'Published';

@@ -7,6 +7,7 @@ import {
   refineContentSection,
   generateSingleSection,
 } from './src/lib/gemini';
+import { generateProductImage } from './src/lib/imageGenerator';
 import { parseAmazonUrl, SAMPLE_PRODUCTS } from './src/lib/amazon';
 
 dotenv.config();
@@ -181,6 +182,34 @@ const handleRegenerateSection = async (req: Request, res: Response) => {
   }
 };
 
+// Common Handler for Product Image Generation
+const handleGenerateProductImage = async (req: Request, res: Response) => {
+  try {
+    const { imageUrl, productName, brand, category, style, aspectRatio, customPrompt } = req.body;
+
+    if (!productName) {
+      return res.status(400).json({ error: 'Product name is required to generate product image.' });
+    }
+
+    const image = await generateProductImage({
+      imageUrl,
+      productName,
+      brand,
+      category,
+      style,
+      aspectRatio,
+      customPrompt,
+    });
+
+    return res.json({ success: true, image });
+  } catch (error: any) {
+    console.error('Product image generation error:', error);
+    return res.status(500).json({
+      error: error.message || 'Failed to generate product image.',
+    });
+  }
+};
+
 // Support both standard Netlify Functions path AND standard Express /api path!
 app.post('/.netlify/functions/get-product', handleGetProduct);
 app.post('/api/get-product', handleGetProduct);
@@ -193,6 +222,9 @@ app.post('/api/refine-content', handleRefineContent);
 
 app.post('/.netlify/functions/regenerate-section', handleRegenerateSection);
 app.post('/api/regenerate-section', handleRegenerateSection);
+
+app.post('/.netlify/functions/generate-product-image', handleGenerateProductImage);
+app.post('/api/generate-product-image', handleGenerateProductImage);
 
 // Setup Vite middleware in dev or serve dist in production
 async function startServer() {
