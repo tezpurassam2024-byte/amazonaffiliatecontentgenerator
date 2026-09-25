@@ -1,0 +1,6 @@
+{
+  "name": "Amazon Affiliate Content Generator",
+  "description": "Transform any Amazon product URL into high-converting, SEO-optimized reviews, pros & cons, specifications, comparison tables, schema markup, and social posts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
