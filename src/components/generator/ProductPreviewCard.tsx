@@ -59,7 +59,7 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
             <span>{marketplaceMeta.flag}</span>
             <span>{marketplaceMeta.name}</span>
@@ -67,6 +67,12 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
           <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-800">
             ASIN: {product.asin || 'N/A'}
           </span>
+          {(product.specifications?.length || 0) > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+              <Check className="h-3 w-3" />
+              <span>{product.specifications?.length} Specs Scraped</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -154,6 +160,36 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
               )}
             </ul>
           </div>
+
+          {/* Extracted Specifications Table */}
+          {product.specifications && product.specifications.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Technical Specifications ({product.specifications.length})
+                </span>
+                <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
+                  Scraped & Verified
+                </span>
+              </div>
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-1">
+                <table className="w-full text-left text-xs">
+                  <tbody className="divide-y divide-slate-200/60">
+                    {product.specifications.map((spec, i) => (
+                      <tr key={i} className="hover:bg-white transition-colors">
+                        <td className="py-1.5 px-2.5 font-semibold text-slate-700 w-2/5">
+                          {spec.name}
+                        </td>
+                        <td className="py-1.5 px-2.5 text-slate-600 w-3/5">
+                          {spec.value}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

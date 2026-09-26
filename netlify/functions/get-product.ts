@@ -1,4 +1,4 @@
-import { parseAmazonUrl, SAMPLE_PRODUCTS } from '../../src/lib/amazon';
+import { scrapeAndExtractAmazonProduct } from '../../src/lib/scraper';
 
 interface NetlifyEvent {
   httpMethod: string;
@@ -28,49 +28,18 @@ export const handler = async (event: NetlifyEvent) => {
     const data = JSON.parse(event.body || '{}');
     const url = data.url;
 
-    const parsed = parseAmazonUrl(url);
-    if (!parsed.isValid) {
+    if (!url) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: parsed.error }),
-      };
-    }
-
-    // Check if ASIN matches our known sample catalog for rich instant pre-population
-    const sampleMatch = SAMPLE_PRODUCTS.find((p) => p.asin === parsed.asin);
-    if (sampleMatch) {
-      return {
-        statusCode: 200,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
         },
-        body: JSON.stringify({
-          success: true,
-          product: {
-            ...sampleMatch,
-            marketplace: parsed.marketplace || sampleMatch.marketplace,
-            amazon_url: parsed.cleanedUrl || sampleMatch.amazon_url,
-          },
-        }),
+        body: JSON.stringify({ error: 'Amazon product URL is required' }),
       };
     }
 
-    // Server-side product-data provider abstraction:
-    // If Amazon PA-API keys are provided in process.env, it can call Amazon PA-API here.
-    // If not configured, we return the parsed metadata and instruct the client to confirm/enter specs via the manual fallback form.
-    const fallbackProduct = {
-      id: `prod_${Date.now()}`,
-      asin: parsed.asin || 'UNKNOWN',
-      marketplace: parsed.marketplace || 'com',
-      product_name: '',
-      brand: '',
-      category: 'General',
-      amazon_url: parsed.cleanedUrl || url,
-      key_features: [],
-      specifications: [],
-      source: 'url',
-    };
+    const extractionResult = await scrapeAndExtractAmazonProduct(url);
 
     return {
       statusCode: 200,
@@ -80,18 +49,21 @@ export const handler = async (event: NetlifyEvent) => {
       },
       body: JSON.stringify({
         success: true,
-        product: fallbackProduct,
-        requiresManualReview: true,
-        message:
-          'ASIN and marketplace detected. Please confirm or provide product details.',
+        product: extractionResult.product,
+        source: extractionResult.source,
+        message: extractionResult.message,
       }),
     };
   } catch (error: any) {
-    console.error('Netlify function get-product error:', error);
+    console.error('Netlify get-product error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({
-        error: error.message || 'Error processing product URL',
+        error: error.message || 'An error occurred while scraping the Amazon product.',
       }),
     };
   }

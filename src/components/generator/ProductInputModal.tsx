@@ -26,6 +26,7 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
 }) => {
   const [urlInput, setUrlInput] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [isScraping, setIsScraping] = useState(false);
   const [isManualMode, setIsManualMode] = useState(false);
 
   // Manual form state
@@ -69,6 +70,39 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
       return;
     }
 
+    setIsScraping(true);
+
+    // Call endpoints
+    const endpoints = ['/.netlify/functions/get-product', '/api/get-product'];
+    let fetchedData: any = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (res.ok && data.success && data.product && data.product.product_name) {
+            fetchedData = data;
+            break;
+          }
+        }
+      } catch (e) {
+        console.warn(`Endpoint ${endpoint} failed:`, e);
+      }
+    }
+
+    setIsScraping(false);
+
+    if (fetchedData && fetchedData.product) {
+      onProductSelected(fetchedData.product);
+      return;
+    }
+
     // Check if URL matches one of our rich sample products
     const sample = SAMPLE_PRODUCTS.find((p) => p.asin === parsed.asin);
     if (sample) {
@@ -80,38 +114,12 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
       return;
     }
 
-    // Attempt to call the server-side provider endpoint
-    try {
-      const res = await fetch('/.netlify/functions/get-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlInput }),
-      });
-      const data = await res.json();
-      if (data.success && data.product) {
-        if (data.requiresManualReview || !data.product.product_name) {
-          // Switch to manual mode pre-filled with the detected ASIN & marketplace!
-          setManualAsin(parsed.asin || 'B0XXXXXX');
-          setManualMarketplace(parsed.marketplace || 'com');
-          setManualProductUrl(parsed.cleanedUrl || urlInput);
-          setIsManualMode(true);
-          setUrlError(
-            'Amazon ASIN & Marketplace detected! Please provide or confirm product details below.'
-          );
-        } else {
-          onProductSelected(data.product);
-        }
-      } else {
-        throw new Error(data.error || 'Could not fetch product information.');
-      }
-    } catch {
-      // Fallback: switch to manual entry with detected ASIN
-      setManualAsin(parsed.asin || '');
-      setManualMarketplace(parsed.marketplace || 'com');
-      setManualProductUrl(parsed.cleanedUrl || urlInput);
-      setIsManualMode(true);
-      setUrlError('Marketplace identified. Please complete the product details below.');
-    }
+    // Fallback: switch to manual entry with detected ASIN
+    setManualAsin(parsed.asin || 'B0XXXXXX');
+    setManualMarketplace(parsed.marketplace || 'com');
+    setManualProductUrl(parsed.cleanedUrl || urlInput);
+    setIsManualMode(true);
+    setUrlError('Marketplace identified. Please complete the product details below.');
   };
 
   const handleSelectSample = (sample: AmazonProduct) => {
@@ -235,18 +243,30 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
               <button
                 type="button"
                 onClick={handleAnalyzeUrl}
-                disabled={isLoading}
+                disabled={isLoading || isScraping}
                 className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-orange-600/30 transition-all hover:bg-orange-700 disabled:opacity-50"
               >
-                {isLoading ? (
-                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {isScraping || isLoading ? (
+                  <>
+                    <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Scraping Specs...</span>
+                  </>
                 ) : (
-                  <Search className="h-3.5 w-3.5" />
+                  <>
+                    <Search className="h-3.5 w-3.5" />
+                    <span>Extract Specs</span>
+                  </>
                 )}
-                Analyze URL
               </button>
             </div>
           </div>
+
+          {isScraping && (
+            <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50/70 px-3.5 py-2 text-xs font-medium text-orange-900 animate-pulse">
+              <Sparkles className="h-3.5 w-3.5 text-orange-600" />
+              <span>Scraping Amazon product page & extracting full technical specifications...</span>
+            </div>
+          )}
 
           {urlError && (
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">

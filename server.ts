@@ -8,6 +8,7 @@ import {
   generateSingleSection,
 } from './src/lib/gemini';
 import { generateProductImage } from './src/lib/imageGenerator';
+import { scrapeAndExtractAmazonProduct } from './src/lib/scraper';
 import { parseAmazonUrl, SAMPLE_PRODUCTS } from './src/lib/amazon';
 
 dotenv.config();
@@ -36,46 +37,26 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 // Common Handler for Product URL resolving
-const handleGetProduct = (req: Request, res: Response) => {
-  const { url } = req.body;
-  const parsed = parseAmazonUrl(url);
+const handleGetProduct = async (req: Request, res: Response) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'Amazon product URL is required.' });
+    }
 
-  if (!parsed.isValid) {
-    return res.status(400).json({ error: parsed.error });
-  }
-
-  const sampleMatch = SAMPLE_PRODUCTS.find((p) => p.asin === parsed.asin);
-  if (sampleMatch) {
+    const extractionResult = await scrapeAndExtractAmazonProduct(url);
     return res.json({
       success: true,
-      product: {
-        ...sampleMatch,
-        marketplace: parsed.marketplace || sampleMatch.marketplace,
-        amazon_url: parsed.cleanedUrl || sampleMatch.amazon_url,
-      },
+      product: extractionResult.product,
+      source: extractionResult.source,
+      message: extractionResult.message,
+    });
+  } catch (err: any) {
+    console.error('Product extraction error:', err);
+    return res.status(400).json({
+      error: err.message || 'Failed to extract product details from Amazon URL.',
     });
   }
-
-  // Fallback representation for new URLs
-  const fallbackProduct = {
-    id: `prod_${Date.now()}`,
-    asin: parsed.asin || 'UNKNOWN',
-    marketplace: parsed.marketplace || 'com',
-    product_name: '',
-    brand: '',
-    category: 'General',
-    amazon_url: parsed.cleanedUrl || url,
-    key_features: [],
-    specifications: [],
-    source: 'url',
-  };
-
-  return res.json({
-    success: true,
-    product: fallbackProduct,
-    requiresManualReview: true,
-    message: 'Amazon marketplace and ASIN detected. Please enter or confirm product specifications.',
-  });
 };
 
 // Common Handler for Content Generation
