@@ -207,8 +207,8 @@ Return the entire response in strict JSON format.`;
     // Merge & enrich specifications to guarantee processor, display, brightness, RAM, storage, etc.
     const rawAiSpecs: ProductSpecification[] = Array.isArray(parsed.specifications) ? parsed.specifications : [];
     const combinedSpecs = [
-      ...(product.specifications || []),
       ...rawAiSpecs,
+      ...(product.specifications || []),
     ];
     const specMap = new Map<string, string>();
     for (const s of combinedSpecs) {
@@ -217,7 +217,7 @@ Return the entire response in strict JSON format.`;
       }
     }
     const dedupedSpecs: ProductSpecification[] = Array.from(specMap.entries()).map(([k, v]) => {
-      const orig = combinedSpecs.find(s => s.name.toLowerCase() === k);
+      const orig = combinedSpecs.find((s) => s.name.toLowerCase() === k);
       return { name: orig ? orig.name : k, value: v };
     });
 

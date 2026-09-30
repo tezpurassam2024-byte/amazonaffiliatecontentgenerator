@@ -1,6 +1,156 @@
 import { ProductSpecification } from '../types';
 
 /**
+ * Builds the exact reference specimen processor detail string:
+ * e.g., "Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS"
+ */
+export function buildSpecimenProcessor(rawCandidate: string = '', productName: string = ''): string {
+  const combined = `${rawCandidate} ${productName}`.toLowerCase();
+
+  // If already in exact full specimen format with ||, NPU, TOPS, and GHz, return as is
+  if (
+    rawCandidate.includes('||') &&
+    /NPU:/i.test(rawCandidate) &&
+    /TOPS/i.test(rawCandidate) &&
+    /GHz/i.test(rawCandidate) &&
+    /\d+C/i.test(rawCandidate)
+  ) {
+    return rawCandidate.trim();
+  }
+
+  // 1. Intel Core Ultra 7 256V (Priority match: 256v or ultra 7 / core ultra 7)
+  if (
+    combined.includes('256v') ||
+    combined.includes('ultra 7 256') ||
+    (combined.includes('ultra 7') && !combined.includes('155h')) ||
+    (combined.includes('core ultra 7') && !combined.includes('155h'))
+  ) {
+    return 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS';
+  }
+
+  // 2. Intel Core Ultra 9 288V
+  if (combined.includes('288v') || (combined.includes('ultra 9') && !combined.includes('185h'))) {
+    return 'Intel Core Ultra 9 288V, 8C (4P + 4LPE) / 8T, Max Turbo up to 5.1GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 48 TOPS';
+  }
+
+  // 3. Intel Core Ultra 5 226V / 228V
+  if (
+    combined.includes('226v') ||
+    combined.includes('228v') ||
+    (combined.includes('ultra 5') && !combined.includes('125h'))
+  ) {
+    return 'Intel Core Ultra 5 226V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.5GHz, 8MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 40 TOPS';
+  }
+
+  // 4. Intel Core Ultra 7 155H
+  if (combined.includes('155h')) {
+    return 'Intel Core Ultra 7 155H, 16C (6P + 8E + 2LPE) / 22T, Max Turbo up to 4.8GHz, 24MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 34 TOPS';
+  }
+
+  // 5. Intel Core Ultra 9 185H
+  if (combined.includes('185h')) {
+    return 'Intel Core Ultra 9 185H, 16C (6P + 8E + 2LPE) / 22T, Max Turbo up to 5.1GHz, 24MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 34 TOPS';
+  }
+
+  // 6. Intel Core Ultra 5 125H
+  if (combined.includes('125h')) {
+    return 'Intel Core Ultra 5 125H, 14C (4P + 8E + 2LPE) / 18T, Max Turbo up to 4.5GHz, 18MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 34 TOPS';
+  }
+
+  // 7. General Intel Core Ultra / Lunar Lake / AI PC match
+  if (combined.includes('core ultra') || combined.includes('lunar lake') || combined.includes('intel ultra')) {
+    return 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS';
+  }
+
+  // 8. Apple Silicon
+  if (combined.includes('m4 max')) {
+    return 'Apple M4 Max Chip, 16C (12P + 4E) / 16T, Max Turbo up to 4.4GHz, 48MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m4 pro')) {
+    return 'Apple M4 Pro Chip, 14C (10P + 4E) / 14T, Max Turbo up to 4.4GHz, 36MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m4')) {
+    return 'Apple M4 Chip, 10C (4P + 6E) / 10T, Max Turbo up to 4.4GHz, 28MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m3 max')) {
+    return 'Apple M3 Max Chip, 14C (10P + 4E) / 14T, Max Turbo up to 4.05GHz, 48MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m3 pro')) {
+    return 'Apple M3 Pro Chip, 11C (5P + 6E) / 11T, Max Turbo up to 4.05GHz, 36MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m3')) {
+    return 'Apple M3 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 4.05GHz, 24MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
+  }
+  if (combined.includes('m2 max')) {
+    return 'Apple M2 Max Chip, 12C (8P + 4E) / 12T, Max Turbo up to 3.7GHz, 36MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
+  }
+  if (combined.includes('m2 pro')) {
+    return 'Apple M2 Pro Chip, 10C (6P + 4E) / 10T, Max Turbo up to 3.5GHz, 30MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
+  }
+  if (combined.includes('m2')) {
+    return 'Apple M2 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 3.5GHz, 20MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
+  }
+  if (combined.includes('m1')) {
+    return 'Apple M1 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 3.2GHz, 16MB Unified Cache || NPU: 16-Core Neural Engine, up to 11 TOPS';
+  }
+
+  // 9. Intel Core i9
+  if (combined.includes('14900hx') || combined.includes('14900')) {
+    return 'Intel Core i9-14900HX, 24C (8P + 16E) / 32T, Max Turbo up to 5.8GHz, 36MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+  if (combined.includes('13900h') || combined.includes('i9')) {
+    return 'Intel Core i9-13900H, 14C (6P + 8E) / 20T, Max Turbo up to 5.4GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+
+  // 10. Intel Core i7
+  if (combined.includes('13700h')) {
+    return 'Intel Core i7-13700H, 14C (6P + 8E) / 20T, Max Turbo up to 5.0GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+  if (combined.includes('12650h')) {
+    return 'Intel Core i7-12650H, 10C (6P + 4E) / 16T, Max Turbo up to 4.7GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+  if (combined.includes('13650hx')) {
+    return 'Intel Core i7-13650HX, 14C (6P + 8E) / 20T, Max Turbo up to 4.9GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+  if (combined.includes('1355u') || (combined.includes('i7') && combined.includes('u'))) {
+    return 'Intel Core i7-1355U, 10C (2P + 8E) / 12T, Max Turbo up to 5.0GHz, 12MB Intel Smart Cache || NPU: Intel GNA 3.0 Dedicated Image Signal Processor';
+  }
+  if (combined.includes('i7')) {
+    return 'Intel Core i7-13700H, 14C (6P + 8E) / 20T, Max Turbo up to 5.0GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
+  }
+
+  // 11. Intel Core i5
+  if (combined.includes('13420h') || combined.includes('12450h')) {
+    return 'Intel Core i5-13420H, 8C (4P + 4E) / 12T, Max Turbo up to 4.6GHz, 12MB Intel Smart Cache || NPU: Intel GNA 3.0';
+  }
+  if (combined.includes('i5')) {
+    return 'Intel Core i5-1335U, 10C (2P + 8E) / 12T, Max Turbo up to 4.6GHz, 12MB Intel Smart Cache || NPU: Intel GNA 3.0';
+  }
+
+  // 12. AMD Ryzen
+  if (combined.includes('ryzen 9') || combined.includes('7940hs') || combined.includes('8945hs')) {
+    return 'AMD Ryzen 9 8945HS, 8C / 16T, Max Boost up to 5.2GHz, 16MB L3 Cache || NPU: AMD Ryzen AI, up to 16 TOPS (39 TOPS Total)';
+  }
+  if (combined.includes('ryzen 7') || combined.includes('7840hs') || combined.includes('8845hs')) {
+    return 'AMD Ryzen 7 8845HS, 8C / 16T, Max Boost up to 5.1GHz, 16MB L3 Cache || NPU: AMD Ryzen AI, up to 16 TOPS (38 TOPS Total)';
+  }
+  if (combined.includes('ryzen 5') || combined.includes('7530u')) {
+    return 'AMD Ryzen 5 7530U, 6C / 12T, Max Boost up to 4.5GHz, 16MB L3 Cache || NPU: AMD Radeon Integrated Graphics Engine';
+  }
+
+  // 13. Qualcomm Snapdragon X
+  if (combined.includes('snapdragon x elite') || combined.includes('x elite')) {
+    return 'Qualcomm Snapdragon X Elite X1E-80-100, 12C / 12T, Multithread up to 3.4GHz, 42MB Total Cache || NPU: Qualcomm Hexagon NPU, up to 45 TOPS';
+  }
+  if (combined.includes('snapdragon x plus') || combined.includes('x plus')) {
+    return 'Qualcomm Snapdragon X Plus X1P-64-100, 10C / 10T, Multithread up to 3.4GHz, 42MB Total Cache || NPU: Qualcomm Hexagon NPU, up to 45 TOPS';
+  }
+
+  // 14. DEFAULT FOR ANY LAPTOP:
+  return 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS';
+}
+
+/**
  * Transforms and enriches specifications into the exact specimen format:
  *
  * Processor: Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS
@@ -38,6 +188,7 @@ export function ensureComprehensiveDeviceSpecs(
     lowerName.includes('inspiron') ||
     lowerName.includes('latitude') ||
     lowerName.includes('xps') ||
+    lowerName.includes('katana') ||
     lowerName.includes('spectre') ||
     lowerName.includes('envy') ||
     lowerName.includes('pavilion') ||
@@ -66,49 +217,20 @@ export function ensureComprehensiveDeviceSpecs(
 
   // 1. LAPTOP / COMPUTER SPECIMEN GENERATOR
   if (isLaptop) {
-    // --- 1. PROCESSOR ---
-    let procVal = getExisting(/^processor$/i) || getExisting(/^processor \/ cpu$/i);
-    if (!procVal || !procVal.includes('||')) {
-      if (lowerName.includes('ultra 7 256v') || lowerName.includes('core ultra 7')) {
-        procVal = 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS';
-      } else if (lowerName.includes('ultra 9') || lowerName.includes('288v')) {
-        procVal = 'Intel Core Ultra 9 288V, 8C (4P + 4LPE) / 8T, Max Turbo up to 5.1GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 48 TOPS';
-      } else if (lowerName.includes('ultra 5')) {
-        procVal = 'Intel Core Ultra 5 226V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.5GHz, 8MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 40 TOPS';
-      } else if (lowerName.includes('m3 max')) {
-        procVal = 'Apple M3 Max Chip, 14C (10P + 4E) / 14T, Max Turbo up to 4.05GHz, 48MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
-      } else if (lowerName.includes('m3 pro')) {
-        procVal = 'Apple M3 Pro Chip, 11C (5P + 6E) / 11T, Max Turbo up to 4.05GHz, 36MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
-      } else if (lowerName.includes('m3')) {
-        procVal = 'Apple M3 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 4.05GHz, 24MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS';
-      } else if (lowerName.includes('m2 max')) {
-        procVal = 'Apple M2 Max Chip, 12C (8P + 4E) / 12T, Max Turbo up to 3.7GHz, 36MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
-      } else if (lowerName.includes('m2 pro')) {
-        procVal = 'Apple M2 Pro Chip, 10C (6P + 4E) / 10T, Max Turbo up to 3.5GHz, 30MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
-      } else if (lowerName.includes('m2')) {
-        procVal = 'Apple M2 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 3.5GHz, 20MB Unified Cache || NPU: 16-Core Neural Engine, up to 15.8 TOPS';
-      } else if (lowerName.includes('m1')) {
-        procVal = 'Apple M1 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 3.2GHz, 16MB Unified Cache || NPU: 16-Core Neural Engine, up to 11 TOPS';
-      } else if (lowerName.includes('i9-13900h') || lowerName.includes('i9')) {
-        procVal = 'Intel Core i9-13900H, 14C (6P + 8E) / 20T, Max Turbo up to 5.4GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
-      } else if (lowerName.includes('i7-13700h') || (lowerName.includes('i7') && lowerName.includes('13'))) {
-        procVal = 'Intel Core i7-13700H, 14C (6P + 8E) / 20T, Max Turbo up to 5.0GHz, 24MB Intel Smart Cache || NPU: Intel Gaussian & Neural Accelerator 3.0';
-      } else if (lowerName.includes('i7')) {
-        procVal = 'Intel Core i7-1355U, 10C (2P + 8E) / 12T, Max Turbo up to 5.0GHz, 12MB Intel Smart Cache || NPU: Intel GNA 3.0 Dedicated Image Signal Processor';
-      } else if (lowerName.includes('i5-1335u') || lowerName.includes('i5')) {
-        procVal = 'Intel Core i5-1335U, 10C (2P + 8E) / 12T, Max Turbo up to 4.6GHz, 12MB Intel Smart Cache || NPU: Intel GNA 3.0';
-      } else if (lowerName.includes('ryzen 9')) {
-        procVal = 'AMD Ryzen 9 7940HS, 8C / 16T, Max Boost up to 5.2GHz, 16MB L3 Cache || NPU: AMD Ryzen AI, up to 10 TOPS (38 TOPS System)';
-      } else if (lowerName.includes('ryzen 7')) {
-        procVal = 'AMD Ryzen 7 7840HS, 8C / 16T, Max Boost up to 5.1GHz, 16MB L3 Cache || NPU: AMD Ryzen AI, up to 10 TOPS (38 TOPS System)';
-      } else if (lowerName.includes('ryzen 5')) {
-        procVal = 'AMD Ryzen 5 7530U, 6C / 12T, Max Boost up to 4.5GHz, 16MB L3 Cache || NPU: AMD Radeon Integrated Graphics Engine';
-      } else if (lowerName.includes('snapdragon x elite')) {
-        procVal = 'Qualcomm Snapdragon X Elite X1E-80-100, 12C / 12T, Multithread up to 3.4GHz, 42MB Total Cache || NPU: Qualcomm Hexagon NPU, up to 45 TOPS';
-      } else {
-        procVal = 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS';
-      }
-    }
+    // Collect all raw clues for processor across all spec names & values
+    const rawCpuClues = [
+      getExisting(/^processor$/i),
+      getExisting(/^processor \/ cpu$/i),
+      getExisting(/^processor type$/i),
+      getExisting(/^cpu model$/i),
+      getExisting(/^cpu$/i),
+      ...specs
+        .filter((s) => /processor|cpu|chip/i.test(s.name))
+        .map((s) => `${s.name}: ${s.value}`),
+    ].filter(Boolean).join(' ');
+
+    // --- 1. PROCESSOR (Exact specimen guarantee) ---
+    const procVal = buildSpecimenProcessor(rawCpuClues, productName);
 
     // --- 2. DISPLAY ---
     let dispVal = getExisting(/^display$/i);
@@ -125,6 +247,8 @@ export function ensureComprehensiveDeviceSpecs(
         dispVal = '16.2" Liquid Retina XDR Mini-LED (3456x2234) | 1000Nits Typical Brightness, 1600Nits Peak Brightness | 100% DCI-P3 | DisplayHDR True Black XDR | 120Hz ProMotion | Dolby Vision | Anti Glare Anti-Reflective | TUV Certified';
       } else if (lowerName.includes('14')) {
         dispVal = '14" 2.2K IPS (2240x1400) | 400Nits Typical Brightness, 500Nits Peak Brightness | 100% sRGB | DisplayHDR 400 | Dolby Vision | Anti Glare | TUV Low Blue Light Certified';
+      } else if (lowerName.includes('17.3') || lowerName.includes('17')) {
+        dispVal = '17.3" FHD IPS (1920x1080) | 300Nits Typical Brightness, 450Nits Peak Brightness | 144Hz Refresh Rate | 100% sRGB | Anti Glare | TUV Low Blue Light Certified';
       } else {
         dispVal = '15.6" FHD IPS (1920x1080) | 350Nits Typical Brightness, 500Nits Peak Brightness | 100% sRGB | DisplayHDR 400 | Dolby Vision | Anti Glare | TUV Low Blue Light Certified';
       }
@@ -145,6 +269,10 @@ export function ensureComprehensiveDeviceSpecs(
         if (is8GB) ramPart = '8GB Soldered Unified Memory LPDDR5-6400 (100GB/s bandwidth), Unified Memory Architecture, not upgradable';
         else if (is32GB) ramPart = '32GB Soldered Unified Memory LPDDR5-6400 (150GB/s bandwidth), Unified Memory Architecture, not upgradable';
         else ramPart = '16GB Soldered Unified Memory LPDDR5-6400 (100GB/s bandwidth), Unified Memory Architecture, not upgradable';
+      } else if (lowerName.includes('katana') || lowerName.includes('ddr5')) {
+        ramPart = is32GB
+          ? '32GB DDR5-5200MHz Dual-Channel (2x 16GB SO-DIMM), Upgradable up to 64GB DDR5'
+          : '16GB DDR5-5200MHz Dual-Channel (2x 8GB SO-DIMM), Upgradable up to 64GB DDR5';
       } else if (is8GB) {
         ramPart = '8GB Soldered LPDDR5x-6400, Max Memory 8GB soldered memory, not upgradable';
       } else if (is32GB) {
@@ -191,6 +319,8 @@ export function ensureComprehensiveDeviceSpecs(
         designVal = '4 side narrow bezel | 1.49 cm Ultra Thin & 1.26 kg Light | Spill-resistant Backlight Keyboard with TrackPoint | Case Material: Carbon Fiber (Top), Aluminium (Bottom)';
       } else if (lowerName.includes('14')) {
         designVal = '4 side narrow bezel | 1.39 cm Ultra Thin & 1.19 kg Light | Backlight Keyboard | Case Material: Aluminium (Top), Aluminium (Bottom)';
+      } else if (lowerName.includes('katana') || lowerName.includes('17')) {
+        designVal = 'Narrow border gaming chassis | 2.51 cm Ultra Thin & 2.60 kg Light | 4-Zone RGB Backlight Keyboard | Case Material: Aluminium (Top), Reinforced Composite (Bottom)';
       } else {
         designVal = '4 side narrow bezel | 1.45 cm Ultra Thin & 1.35 kg Light | Backlight Keyboard | Case Material: Aluminium (Top), Aluminium (Bottom)';
       }
@@ -201,10 +331,14 @@ export function ensureComprehensiveDeviceSpecs(
     if (!gfxVal) {
       if (lowerName.includes('macbook') || lowerBrand.includes('apple')) {
         gfxVal = 'Integrated Apple 10-Core GPU | Hardware-Accelerated Ray Tracing, Dynamic Caching, Mesh Shading';
-      } else if (lowerName.includes('ultra 7') || lowerName.includes('ultra 9')) {
-        gfxVal = 'Integrated Intel Arc 140V Graphics | DirectX 12 Ultimate, Ray Tracing, Intel XeSS AI Super Sampling';
+      } else if (lowerName.includes('rtx 4070')) {
+        gfxVal = 'NVIDIA GeForce RTX 4070 8GB GDDR6 Dedicated Graphics | 140W TGP, DLSS 3.5, Ada Lovelace Architecture';
       } else if (lowerName.includes('rtx 4060')) {
         gfxVal = 'NVIDIA GeForce RTX 4060 8GB GDDR6 Dedicated Graphics | 115W TGP, DLSS 3.5, Ada Lovelace Architecture';
+      } else if (lowerName.includes('rtx 4050')) {
+        gfxVal = 'NVIDIA GeForce RTX 4050 6GB GDDR6 Dedicated Graphics | 105W TGP, DLSS 3.5, Ada Lovelace Architecture';
+      } else if (lowerName.includes('ultra 7') || lowerName.includes('ultra 9')) {
+        gfxVal = 'Integrated Intel Arc 140V Graphics | DirectX 12 Ultimate, Ray Tracing, Intel XeSS AI Super Sampling';
       } else {
         gfxVal = 'Integrated Intel Arc Graphics | DirectX 12 Ultimate, Intel XeSS AI Super Sampling';
       }
@@ -215,6 +349,8 @@ export function ensureComprehensiveDeviceSpecs(
     if (!battVal) {
       if (lowerName.includes('macbook') || lowerBrand.includes('apple')) {
         battVal = '66.5Wh Integrated Lithium-Polymer Battery | MagSafe 3 Fast Charging with 35W/70W Adapter (Up to 18 Hours Apple TV playback, 15 Hours Wireless Web)';
+      } else if (lowerName.includes('katana') || lowerName.includes('gaming')) {
+        battVal = '53.5Wh Integrated 3-Cell Li-Polymer Battery | 200W High-Output AC Fast Adapter';
       } else {
         battVal = '70Wh Integrated 4-Cell Li-Polymer Battery | Rapid Charge Boost (Up to 18 Hours Video Playback, 15 min charge for 3 hours use)';
       }
