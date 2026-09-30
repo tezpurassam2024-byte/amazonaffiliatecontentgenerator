@@ -25,6 +25,64 @@ export interface ProductSpecification {
   value: string;
 }
 
+export interface MasterExtractedProductInfo {
+  name: string;
+  brand: string;
+  model: string;
+  model_number: string;
+  asin: string;
+  category: string;
+  variant: string;
+}
+
+export interface MasterExtractedSpecifications {
+  colour: string;
+  dimensions: string;
+  weight: string;
+  material: string;
+  operating_system: string;
+  processor: string;
+  chipset: string;
+  ram: string;
+  storage: string;
+  display_size: string;
+  display_type: string;
+  resolution: string;
+  refresh_rate: string;
+  rear_camera: string;
+  front_camera: string;
+  battery_capacity: string;
+  battery_life: string;
+  charging: string;
+  connectivity: string;
+  bluetooth: string;
+  wifi: string;
+  usb: string;
+  nfc: string;
+  sensors: string;
+  water_resistance: string;
+  special_features: string;
+  compatibility: string;
+  warranty: string;
+  included_components: string;
+  [key: string]: string;
+}
+
+export interface MasterExtractionResult {
+  product: MasterExtractedProductInfo;
+  specifications: MasterExtractedSpecifications;
+  marketing_highlights: string[];
+  source: {
+    source_type: 'Amazon';
+    source_url: string;
+    data_confidence: 'High' | 'Medium' | 'Low';
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
 export interface AmazonProduct {
   id: string;
   asin: string;
@@ -32,6 +90,8 @@ export interface AmazonProduct {
   product_name: string;
   brand: string;
   model?: string;
+  model_number?: string;
+  variant?: string;
   category: string;
   price?: string;
   rating?: number;
@@ -40,6 +100,9 @@ export interface AmazonProduct {
   amazon_url: string;
   key_features: string[];
   specifications: ProductSpecification[];
+  marketing_highlights?: string[];
+  data_confidence?: 'High' | 'Medium' | 'Low';
+  master_extraction?: MasterExtractionResult;
   description?: string;
   source: 'url' | 'manual' | 'api';
   created_at?: string;

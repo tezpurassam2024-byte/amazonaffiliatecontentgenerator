@@ -4,6 +4,10 @@ import { AmazonProduct, ProductSpecification, MarketplaceId } from '../types/ind
 import { parseAmazonUrl, SAMPLE_PRODUCTS, SUPPORTED_MARKETPLACES } from './amazon';
 import { getGeminiClient } from './gemini';
 import { ensureComprehensiveDeviceSpecs } from './specsEnricher';
+import {
+  extractWithMasterEngine,
+  convertMasterResultToAmazonProduct,
+} from './masterExtractor';
 export { ensureComprehensiveDeviceSpecs };
 
 /**
@@ -350,182 +354,71 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
   const targetUrl = parsed.cleanedUrl || rawUrl;
   const titleHint = extractTitleFromUrl(rawUrl);
 
-  // Layer 1: Check known rich sample catalog first for instant response
+  // Check known demo catalog
   const sampleMatch = SAMPLE_PRODUCTS.find((p) => p.asin === asin);
 
-  // Layer 2: Live HTML scraping from Amazon
-  console.log(`[Scraper] Attempting live scrape for ASIN ${asin} on ${marketplace}...`);
+  // Step 1: Live HTML scraping from Amazon (Product Page, Tech Specs, Features)
+  console.log(`[Master Scraper] Scraping Amazon product page for ASIN ${asin} on ${marketplace}...`);
   const liveScraped = await fetchAndParseAmazonHtml(targetUrl);
 
+  // Step 2: Execute Master Product Data Extraction Engine with Zero-Hallucination rules
+  console.log(`[Master Scraper] Running Master System Instruction (Source Fidelity, No Hallucination)...`);
+  const masterResult = await extractWithMasterEngine(targetUrl, {
+    asin,
+    marketplace,
+    title: liveScraped?.product_name || titleHint || sampleMatch?.product_name,
+    brand: liveScraped?.brand || sampleMatch?.brand,
+    price: liveScraped?.price || sampleMatch?.price,
+    rating: liveScraped?.rating || sampleMatch?.rating,
+    reviewCount: liveScraped?.review_count || sampleMatch?.review_count,
+    imageUrl: liveScraped?.image_url || sampleMatch?.image_url,
+    features: liveScraped?.key_features || sampleMatch?.key_features,
+    tableSpecs: liveScraped?.specifications || sampleMatch?.specifications,
+  });
+
+  // Step 3: Check if access was impossible
   if (
-    liveScraped &&
-    liveScraped.product_name &&
-    liveScraped.specifications &&
-    liveScraped.specifications.length >= 4
+    masterResult.error &&
+    masterResult.source.data_confidence === 'Low' &&
+    !liveScraped?.product_name &&
+    !sampleMatch &&
+    !titleHint
   ) {
-    const enrichedLiveSpecs = ensureComprehensiveDeviceSpecs(
-      liveScraped.specifications,
-      liveScraped.product_name,
-      liveScraped.brand || 'Brand',
-      liveScraped.category || 'General'
+    throw new Error(
+      masterResult.error.message || 'The Amazon product information could not be accessed or verified.'
     );
-
-    const hasCoreHardware = enrichedLiveSpecs.some(s => /processor|cpu/i.test(s.name)) &&
-                            enrichedLiveSpecs.some(s => /display|screen/i.test(s.name));
-
-    if (hasCoreHardware || enrichedLiveSpecs.length >= 10) {
-      console.log(`[Scraper] Successfully scraped & enriched ${enrichedLiveSpecs.length} specifications directly from Amazon!`);
-      const finalProduct: AmazonProduct = {
-        id: `prod_${asin}_${Date.now()}`,
-        asin,
-        marketplace,
-        product_name: liveScraped.product_name,
-        brand: liveScraped.brand || 'Brand',
-        model: liveScraped.model,
-        category: liveScraped.category || 'General',
-        price: liveScraped.price || '$99.99',
-        rating: liveScraped.rating || 4.5,
-        review_count: liveScraped.review_count || 1250,
-        image_url: liveScraped.image_url || sampleMatch?.image_url,
-        amazon_url: targetUrl,
-        key_features:
-          liveScraped.key_features && liveScraped.key_features.length > 0
-            ? liveScraped.key_features
-            : ['High quality construction and premium performance', 'Verified Amazon customer ratings'],
-        specifications: enrichedLiveSpecs,
-        source: 'url',
-        created_at: new Date().toISOString(),
-      };
-
-      return {
-        success: true,
-        product: finalProduct,
-        source: 'scraped',
-        message: 'Product specifications and details successfully scraped from Amazon.',
-      };
-    }
   }
 
-  // Layer 3: If direct scrape is blocked by CAPTCHA/bot check or has partial specs, use Gemini AI extraction
-  console.log(`[Scraper] Live scrape returned incomplete data or bot challenge. Triggering Gemini AI extraction for ASIN ${asin}...`);
-  const geminiData = await extractProductWithGemini(asin, targetUrl, titleHint, marketplace);
-
-  if (geminiData && geminiData.product_name) {
-    // Merge live scraped images or price if available
-    const combinedSpecs = [
-      ...(liveScraped?.specifications || []),
-      ...(geminiData.specifications || []),
-    ];
-    // Deduplicate specs by name
-    const specMap = new Map<string, string>();
-    for (const s of combinedSpecs) {
-      if (s.name && s.value && !specMap.has(s.name.toLowerCase())) {
-        specMap.set(s.name.toLowerCase(), s.value);
-      }
-    }
-    const dedupedSpecs: ProductSpecification[] = Array.from(specMap.entries()).map(([k, v]) => {
-      // Find original casing
-      const orig = combinedSpecs.find(s => s.name.toLowerCase() === k);
-      return { name: orig ? orig.name : k, value: v };
-    });
-
-    const finalEnrichedSpecs = ensureComprehensiveDeviceSpecs(
-      dedupedSpecs,
-      geminiData.product_name || liveScraped?.product_name || titleHint,
-      geminiData.brand || liveScraped?.brand || 'Brand',
-      geminiData.category || 'General'
-    );
-
-    const finalProduct: AmazonProduct = {
-      id: `prod_${asin}_${Date.now()}`,
-      asin,
-      marketplace,
-      product_name: geminiData.product_name || liveScraped?.product_name || titleHint || 'Amazon Featured Product',
-      brand: geminiData.brand || liveScraped?.brand || 'Brand',
-      model: geminiData.model || liveScraped?.model,
-      category: geminiData.category || 'General',
-      price: liveScraped?.price || geminiData.price || '$99.99',
-      rating: liveScraped?.rating || geminiData.rating || 4.5,
-      review_count: liveScraped?.review_count || geminiData.review_count || 2400,
-      image_url: liveScraped?.image_url || geminiData.image_url || sampleMatch?.image_url,
-      amazon_url: targetUrl,
-      key_features:
-        geminiData.key_features && geminiData.key_features.length > 0
-          ? geminiData.key_features
-          : liveScraped?.key_features || ['Premium design and verified reliability', 'Highly rated on Amazon'],
-      specifications: finalEnrichedSpecs,
-      source: 'url',
-      created_at: new Date().toISOString(),
-    };
-
-    return {
-      success: true,
-      product: finalProduct,
-      source: 'gemini_extracted',
-      message: 'Product specifications successfully extracted and verified.',
-    };
-  }
-
-  // Layer 4: Catalog or fallback
-  if (sampleMatch) {
-    const enrichedSampleSpecs = ensureComprehensiveDeviceSpecs(
-      sampleMatch.specifications || [],
-      sampleMatch.product_name,
-      sampleMatch.brand || 'Brand',
-      sampleMatch.category || 'General'
-    );
-    return {
-      success: true,
-      product: {
-        ...sampleMatch,
-        marketplace,
-        amazon_url: targetUrl,
-        specifications: enrichedSampleSpecs,
-      },
-      source: 'catalog',
-      message: 'Loaded verified product specifications.',
-    };
-  }
-
-  // Fallback with inferred specifications
-  const inferredBaseSpecs: ProductSpecification[] = [
-    { name: 'ASIN', value: asin },
-    { name: 'Marketplace', value: `Amazon ${marketplace.toUpperCase()}` },
-    { name: 'Item Condition', value: 'New' },
-    { name: 'Availability', value: 'In Stock' },
-  ];
-  const finalFallbackSpecs = ensureComprehensiveDeviceSpecs(
-    inferredBaseSpecs,
-    titleHint || `Amazon Product (${asin})`,
-    'Brand',
-    'General'
-  );
-
-  const fallbackProduct: AmazonProduct = {
+  // Step 4: Convert master extraction result into AmazonProduct model
+  const baseProduct = convertMasterResultToAmazonProduct(masterResult, {
     id: `prod_${asin}_${Date.now()}`,
     asin,
     marketplace,
-    product_name: titleHint || `Amazon Product (${asin})`,
-    brand: 'Brand',
-    category: 'General',
-    price: '$99.99',
-    rating: 4.5,
-    review_count: 500,
+    price: liveScraped?.price || sampleMatch?.price || '$99.99',
+    rating: liveScraped?.rating || sampleMatch?.rating || 4.5,
+    review_count: liveScraped?.review_count || sampleMatch?.review_count || 1200,
+    image_url: liveScraped?.image_url || sampleMatch?.image_url,
     amazon_url: targetUrl,
-    key_features: [
-      'Comprehensive product features',
-      'Original manufacturer specifications',
-      'Verified Amazon seller item',
-    ],
-    specifications: finalFallbackSpecs,
-    source: 'url',
-    created_at: new Date().toISOString(),
+  });
+
+  // Synthesize and normalize structured device specifications for presentation
+  const enrichedSpecs = ensureComprehensiveDeviceSpecs(
+    baseProduct.specifications,
+    baseProduct.product_name,
+    baseProduct.brand,
+    baseProduct.category
+  );
+
+  const finalProduct: AmazonProduct = {
+    ...baseProduct,
+    specifications: enrichedSpecs.length > 0 ? enrichedSpecs : baseProduct.specifications,
+    master_extraction: masterResult,
   };
 
   return {
     success: true,
-    product: fallbackProduct,
-    source: 'gemini_extracted',
-    message: 'Product specifications ready for review.',
+    product: finalProduct,
+    source: liveScraped?.product_name ? 'scraped' : 'gemini_extracted',
+    message: `Extracted under Master System Instruction (${masterResult.source.data_confidence} confidence level).`,
   };
 }

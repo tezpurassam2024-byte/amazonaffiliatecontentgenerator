@@ -50,6 +50,7 @@ const handleGetProduct = async (req: Request, res: Response) => {
       product: extractionResult.product,
       source: extractionResult.source,
       message: extractionResult.message,
+      master_extraction: extractionResult.product.master_extraction,
     });
   } catch (err: any) {
     console.error('Product extraction error:', err);
