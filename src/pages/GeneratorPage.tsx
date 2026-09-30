@@ -230,6 +230,16 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
             onConfirm={() => setIsProductConfirmed(true)}
             onEdit={() => setIsProductConfirmed(false)}
             isConfirmed={isProductConfirmed}
+            onUpdateProduct={(updated) => {
+              setProduct(updated);
+              setOptions((prev) => ({
+                ...prev,
+                keywords: {
+                  ...prev.keywords,
+                  primary: updated.product_name,
+                },
+              }));
+            }}
           />
         )}
 

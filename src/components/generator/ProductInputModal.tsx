@@ -11,10 +11,12 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  ClipboardPaste,
 } from 'lucide-react';
 import { AmazonProduct, MarketplaceId, ProductSpecification } from '../../types';
 import { parseAmazonUrl, SAMPLE_PRODUCTS, SUPPORTED_MARKETPLACES } from '../../lib/amazon';
 import { extractProductAutonomously } from '../../lib/autonomousExtractor';
+import { PasteProductDetailsModal } from './PasteProductDetailsModal';
 
 interface ProductInputModalProps {
   onProductSelected: (product: AmazonProduct) => void;
@@ -29,6 +31,7 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isScraping, setIsScraping] = useState(false);
   const [isManualMode, setIsManualMode] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
 
   // Manual form state
   const [manualName, setManualName] = useState('');
@@ -228,21 +231,32 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsManualMode(!isManualMode)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-600 transition-colors hover:text-orange-700"
-        >
-          {isManualMode ? (
-            <>
-              <ChevronUp className="h-4 w-4" /> Use URL Input
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4" /> Enter Product Manually
-            </>
-          )}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPasteModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:from-orange-700 hover:to-amber-700 transition-all active:scale-95 ring-2 ring-orange-500/20"
+            title="Paste details directly copied from Amazon page"
+          >
+            <ClipboardPaste className="h-3.5 w-3.5" />
+            <span>Paste Your Product Details Here</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsManualMode(!isManualMode)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            {isManualMode ? (
+              <>
+                <ChevronUp className="h-4 w-4" /> Use URL Input
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" /> Enter Form Manually
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {!isManualMode ? (
@@ -566,6 +580,31 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
             </button>
           </div>
         </form>
+      )}
+      {/* Manual Amazon Product Details Paste Modal */}
+      {showPasteModal && (
+        <PasteProductDetailsModal
+          product={{
+            id: `prod_manual_${Date.now()}`,
+            asin: 'B0XXXXXXXX',
+            marketplace: 'com',
+            product_name: urlInput ? urlInput.slice(0, 40) : '',
+            brand: '',
+            category: 'Computers & Laptops',
+            price: '',
+            rating: 4.6,
+            review_count: 1500,
+            amazon_url: urlInput || 'https://www.amazon.com',
+            key_features: [],
+            specifications: [],
+            source: 'manual',
+          }}
+          isOpen={showPasteModal}
+          onClose={() => setShowPasteModal(false)}
+          onSave={(updated) => {
+            onProductSelected(updated);
+          }}
+        />
       )}
     </div>
   );

@@ -12,16 +12,19 @@ import {
   Copy,
   X,
   ShieldCheck,
+  ClipboardPaste,
 } from 'lucide-react';
 import { AmazonProduct } from '../../types';
 import { SUPPORTED_MARKETPLACES } from '../../lib/amazon';
 import { ensureComprehensiveDeviceSpecs } from '../../lib/specsEnricher';
+import { PasteProductDetailsModal } from './PasteProductDetailsModal';
 
 interface ProductPreviewCardProps {
   product: AmazonProduct;
   onConfirm: () => void;
   onEdit: () => void;
   isConfirmed: boolean;
+  onUpdateProduct?: (product: AmazonProduct) => void;
 }
 
 export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
@@ -29,8 +32,10 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
   onConfirm,
   onEdit,
   isConfirmed,
+  onUpdateProduct,
 }) => {
   const [showJsonModal, setShowJsonModal] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
   const [copiedBullets, setCopiedBullets] = useState(false);
 
@@ -264,6 +269,15 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
           </span>
           <button
             type="button"
+            onClick={() => setShowPasteModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-3 py-1 text-xs font-bold text-white shadow-sm hover:from-orange-700 hover:to-amber-700 transition-all active:scale-95 ring-2 ring-orange-500/20"
+            title="Paste details directly copied from Amazon page"
+          >
+            <ClipboardPaste className="h-3.5 w-3.5" />
+            <span>Paste Your Product Details Here</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setShowJsonModal(true)}
             className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
             title="Inspect Master Specification JSON"
@@ -421,20 +435,30 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
           <span>Factual baseline confirmed. Single source of structured product facts.</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setShowPasteModal(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-orange-300 bg-orange-50/90 px-3.5 py-2 text-xs font-bold text-orange-900 shadow-sm hover:bg-orange-100 transition-all"
+            title="Paste details directly copied from Amazon page"
+          >
+            <ClipboardPaste className="h-3.5 w-3.5 text-orange-600" />
+            <span>Paste Product Details Manually</span>
+          </button>
+
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
             <Edit3 className="h-3.5 w-3.5" />
-            Edit Product Information
+            Edit Info
           </button>
 
           <button
             type="button"
             onClick={onConfirm}
-            className={`flex items-center gap-1.5 rounded-xl px-5 py-2 text-xs font-semibold text-white shadow-sm transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all ${
               isConfirmed
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : 'bg-orange-600 shadow-orange-600/20 hover:bg-orange-700'
@@ -496,6 +520,20 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Manual Amazon Product Details Paste Modal */}
+      {showPasteModal && (
+        <PasteProductDetailsModal
+          product={product}
+          isOpen={showPasteModal}
+          onClose={() => setShowPasteModal(false)}
+          onSave={(updated) => {
+            if (onUpdateProduct) {
+              onUpdateProduct(updated);
+            }
+          }}
+        />
       )}
     </div>
   );
