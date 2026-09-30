@@ -117,6 +117,16 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
       }
 
       setGeneratedContent(result.data);
+      if (result.data?.specifications?.length) {
+        setProduct((prev) =>
+          prev
+            ? {
+                ...prev,
+                specifications: result.data.specifications,
+              }
+            : prev
+        );
+      }
       setArticleStatus('Generated');
       localDb.incrementGenerationCount();
       localDb.addLog('info', `Generated affiliate content package for "${product.product_name}"`);

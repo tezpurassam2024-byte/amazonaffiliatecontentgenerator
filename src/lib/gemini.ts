@@ -4,7 +4,9 @@ import {
   ContentGenerationOptions,
   GeneratedArticleContent,
   ComparisonProduct,
+  ProductSpecification,
 } from '../types';
+import { ensureComprehensiveDeviceSpecs } from './specsEnricher';
 
 /**
  * Robust API key detection across supported environment variable names
@@ -166,7 +168,24 @@ SECTIONS TO GENERATE:
    - "who_should_consider_alternatives"
    - "final_verdict"
 3. "pros_cons": Object with "pros" (array of strings) and "cons" (array of strings).
-4. "specifications": Array of { "name": string, "value": string } matching available specs.
+4. "specifications": Comprehensive array of at least 15 to 25 technical specifications ({ "name": string, "value": string }). For laptops, computers, monitors, phones, audio, and electronics, you MUST explicitly include all of the following specific attributes:
+   - "Processor / CPU": Exact processor model, cores, and clock speed (e.g. Apple M3 chip 8-core CPU / Intel Core i7-13700H / AMD Ryzen 7 7840HS)
+   - "Display Type": Specific panel technology (e.g. Liquid Retina IPS with True Tone, OLED, AMOLED, Anti-Glare IPS)
+   - "Screen Size": Diagonal size & aspect ratio (e.g. 15.3-inch diagonal, 16:10)
+   - "Screen Resolution & Refresh Rate": (e.g. 2880 x 1864, 60Hz / 120Hz ProMotion)
+   - "Display Brightness (Typical)": Sustained brightness in nits (e.g. 500 nits typical)
+   - "Peak Brightness": Maximum peak nits (e.g. 500 nits SDR, 1000 nits peak, 1600 nits HDR peak)
+   - "Display HDR Details": Specific HDR formats (e.g. Dolby Vision, HDR10, Wide Color P3, 1 Billion Colors)
+   - "RAM (Memory) Details": Capacity, type, and speed (e.g. 16GB Unified Memory / LPDDR5X)
+   - "Storage Details": Capacity and interface (e.g. 512GB PCIe 4.0 NVMe SSD)
+   - "Software / Operating System": Exact OS (e.g. Windows 11 Home / Windows 11 Pro / macOS Sonoma with Apple Intelligence)
+   - "Case Material & Design": Specific chassis materials (e.g. 100% Recycled CNC Machined Aluminum Unibody with Anodized Finish)
+   - "Thinness / Thickness Measurement": Thickness measurement (e.g. 0.45 inches / 11.5 mm ultra-thin)
+   - "Item Weight": Exact weight (e.g. 3.3 lbs / 1.51 kg)
+   - "Dimensions": Measurements in L x W x H
+   - "Battery Life & Capacity": Runtime in hours and Wh capacity (e.g. Up to 18 hours, 66.5 Wh)
+   - "Ports & Expansion": Complete breakdown of ports (e.g. MagSafe 3, 2x Thunderbolt 4 / USB 4, 3.5mm headphone jack)
+   (Or relevant full hardware attributes for non-computer electronics).
 5. "comparison": Comparison table comparing this main product with category competitors (or provided extra products), using category-relevant attributes (e.g. for laptops: CPU, RAM, Display, Battery, Weight, Price; for audio: ANC, Battery, Driver, Bluetooth, Price). Include a concise summary verdict.
 6. "faqs": 8-10 high-value FAQs based strictly on actual product data and buyer questions.
 7. "meta_titles": 3 SEO meta title options (50-60 characters each).
@@ -193,6 +212,32 @@ Return the entire response in strict JSON format.`;
     const rawText = await callGeminiModel(ai, prompt, true);
     const parsed = cleanJsonOutput(rawText);
 
+    // Merge & enrich specifications to guarantee processor, display, brightness, RAM, storage, etc.
+    const rawAiSpecs: ProductSpecification[] = Array.isArray(parsed.specifications) ? parsed.specifications : [];
+    const combinedSpecs = [
+      ...(product.specifications || []),
+      ...rawAiSpecs,
+    ];
+    const specMap = new Map<string, string>();
+    for (const s of combinedSpecs) {
+      if (s.name && s.value && !specMap.has(s.name.toLowerCase())) {
+        specMap.set(s.name.toLowerCase(), s.value);
+      }
+    }
+    const dedupedSpecs: ProductSpecification[] = Array.from(specMap.entries()).map(([k, v]) => {
+      const orig = combinedSpecs.find(s => s.name.toLowerCase() === k);
+      return { name: orig ? orig.name : k, value: v };
+    });
+
+    const finalComprehensiveSpecs = ensureComprehensiveDeviceSpecs(
+      dedupedSpecs,
+      product.product_name,
+      product.brand,
+      product.category
+    );
+
+    parsed.specifications = finalComprehensiveSpecs;
+
     // Build raw markdown representation
     const title =
       parsed.seo_titles?.selected || parsed.seo_titles?.options?.[0] || product.product_name;
@@ -218,7 +263,7 @@ Return the entire response in strict JSON format.`;
         .join('\n')}\n`,
       `## Product Specifications\n`,
       `| Specification | Detail |\n| --- | --- |\n` +
-        (product.specifications || []).map((s) => `| ${s.name} | ${s.value} |`).join('\n') +
+        finalComprehensiveSpecs.map((s) => `| ${s.name} | ${s.value} |`).join('\n') +
         '\n',
       `## Who Should Buy This?\n${review.who_should_buy || ''}\n`,
       `## Who Should Consider Alternatives?\n${review.who_should_consider_alternatives || ''}\n`,
@@ -357,6 +402,19 @@ Return a strict JSON object with only the single key "${section}" containing the
   try {
     const text = await callGeminiModel(ai, prompt, true);
     const parsed = cleanJsonOutput(text);
+    if (section === 'specifications') {
+      const regeneratedSpecs = Array.isArray(parsed[section])
+        ? parsed[section]
+        : Array.isArray(parsed)
+        ? parsed
+        : [];
+      return ensureComprehensiveDeviceSpecs(
+        regeneratedSpecs,
+        product.product_name,
+        product.brand,
+        product.category
+      );
+    }
     return parsed[section] || parsed;
   } catch (err: any) {
     console.warn('Single section regeneration error:', err.message);
@@ -397,7 +455,7 @@ function generateProceduralAffiliateContent(
           'Offers dedicated manufacturer support and warranty protection',
         ];
 
-  const specs =
+  const baseSpecs =
     product.specifications && product.specifications.length
       ? product.specifications
       : [
@@ -406,6 +464,8 @@ function generateProceduralAffiliateContent(
           { name: 'Category', value: product.category || 'General' },
           { name: 'Availability', value: 'Amazon Global Marketplaces' },
         ];
+
+  const specs = ensureComprehensiveDeviceSpecs(baseSpecs, name, brand, product.category);
 
   const pros = [
     `Solid build quality from an established manufacturer (${brand})`,

@@ -3,6 +3,8 @@ import { GoogleGenAI } from '@google/genai';
 import { AmazonProduct, ProductSpecification, MarketplaceId } from '../types/index';
 import { parseAmazonUrl, SAMPLE_PRODUCTS, SUPPORTED_MARKETPLACES } from './amazon';
 import { getGeminiClient } from './gemini';
+import { ensureComprehensiveDeviceSpecs } from './specsEnricher';
+export { ensureComprehensiveDeviceSpecs };
 
 /**
  * Extracts slug text from Amazon URL path (e.g. /Sony-WH-1000XM5-Canceling-Headphones/dp/...)
@@ -236,10 +238,9 @@ async function extractProductWithGemini(
   const ai = getGeminiClient();
   if (!ai) return null;
 
-  try {
-    const marketplaceDomain = SUPPORTED_MARKETPLACES[marketplace]?.domain || 'amazon.com';
+  const marketplaceDomain = SUPPORTED_MARKETPLACES[marketplace]?.domain || 'amazon.com';
 
-    const prompt = `You are an expert e-commerce product cataloger.
+  const prompt = `You are a world-class e-commerce product cataloger and hardware specifications engineer.
 Extract the exact, complete, high-fidelity Amazon product specifications for:
 ASIN: ${asin}
 Amazon Domain: ${marketplaceDomain}
@@ -249,59 +250,88 @@ ${titleHint ? `Product Title Hint / Slug: ${titleHint}` : ''}
 Provide a comprehensive, accurate JSON response representing this exact product.
 Requirements:
 1. product_name: The full official Amazon product listing title including key highlights.
-2. brand: The manufacturer or brand name (e.g. Apple, Sony, Samsung, Bose, Nike).
-3. model: Specific model number or name (e.g. WH-1000XM5, M3 15-inch, QuietComfort 45).
-4. category: Relevant product category (e.g. Electronics, Audio, Laptops, Kitchen).
-5. price: Typical current retail price formatted with currency (e.g. $299.99).
-6. rating: Realistic average rating (number between 4.0 and 5.0, e.g. 4.6).
+2. brand: The manufacturer or brand name (e.g. Apple, Sony, Samsung, Bose, Dell, HP, Lenovo).
+3. model: Specific model number or name (e.g. MacBook Air M3 15-inch, WH-1000XM5, XPS 15).
+4. category: Relevant product category (e.g. Laptops, Electronics, Audio, Kitchen).
+5. price: Typical current retail price formatted with currency (e.g. $1,299.00).
+6. rating: Realistic average rating (number between 4.0 and 5.0, e.g. 4.7).
 7. review_count: Approximate review count (integer, e.g. 8500).
 8. image_url: A high-quality direct product image URL (preferably official Amazon CDN or clean manufacturer image).
 9. key_features: Array of 5 to 7 detailed, high-impact feature bullet points directly matching what Amazon shows in "About this item".
-10. specifications: Array of at least 8 to 15 key technical specifications (objects with "name" and "value"), such as:
-    - Dimensions / Dimensions
-    - Item Weight
-    - Connectivity Technology
-    - Battery Life
-    - Material / Build
-    - Color
-    - Compatible Devices
-    - Included Components
-    - Special Features
-    - Manufacturer
+10. specifications: Array of comprehensive technical specifications (objects with "name" and "value").
+CRITICAL REQUIREMENT: For electronics, laptops, computers, monitors, phones, and audio devices, you MUST explicitly include all of the following specific attributes:
+    - "Processor / CPU": Exact processor model, family, architecture, core count, and clock speed (e.g. "Apple M3 chip (8-core CPU with 4 performance cores and 4 efficiency cores, 10-core GPU, 16-core Neural Engine)" or "Intel Core i7-13700H (14 cores, up to 5.0 GHz Turbo)")
+    - "Display Type": Specific panel technology (e.g. "Liquid Retina Display with LED Backlight and True Tone", "OLED Display", "Anti-Glare IPS LCD")
+    - "Screen Size": Exact diagonal measurement and aspect ratio (e.g. "15.3-inch diagonal (16:10 aspect ratio)")
+    - "Screen Resolution & Refresh Rate": Exact pixel dimensions and refresh rate (e.g. "2880 x 1864 native resolution at 224 PPI, 60Hz" or "120Hz ProMotion")
+    - "Display Brightness (Typical)": Standard sustained brightness in nits (e.g. "500 nits typical brightness")
+    - "Peak Brightness": Maximum peak brightness rating in nits (e.g. "500 nits SDR, 1000 nits peak, 1600 nits HDR peak")
+    - "Display HDR Details": Specific HDR formats and color certifications (e.g. "Dolby Vision, HDR10, Wide Color (P3), 1 Billion Colors")
+    - "RAM (Memory) Details": Capacity, memory type, and speed (e.g. "16GB Unified Memory (LPDDR5X-6400, 100GB/s bandwidth)")
+    - "Storage Details": Capacity, drive type, and interface (e.g. "512GB PCIe 4.0 NVMe High-Speed Solid State Drive (SSD)")
+    - "Software / Operating System": Exact pre-installed operating system and software (e.g. "macOS Sonoma (Apple Intelligence ready)" or "Windows 11 Home 64-bit with Microsoft Copilot+")
+    - "Case Material & Design": Exact chassis materials and finish (e.g. "100% Recycled CNC Machined Aluminum Unibody with Anodized Finish")
+    - "Thinness / Thickness Measurement": Exact thickness (e.g. "0.45 inches (11.5 mm) ultra-thin height")
+    - "Item Weight": Exact weight (e.g. "3.3 lbs (1.51 kg)")
+    - "Dimensions": Measurements in L x W x H (e.g. "13.40 x 9.35 x 0.45 inches (34.04 x 23.76 x 1.15 cm)")
+    - "Battery Life & Capacity": Realistic runtimes and watt-hours (e.g. "Up to 18 hours video playback, 15 hours wireless web; 66.5 Wh lithium-polymer")
+    - "Charging Technology": Charger wattage and port (e.g. "35W Dual USB-C Port Compact Power Adapter with MagSafe 3 fast charging")
+    - "Ports & Expansion": Specific port breakdown (e.g. "MagSafe 3 charging port, 2x Thunderbolt 4 / USB 4 ports, 3.5mm headphone jack with high-impedance support")
+    - "Wireless Connectivity": Wi-Fi and Bluetooth specifications (e.g. "Wi-Fi 6E (802.11ax), Bluetooth 5.3")
+    - "Webcam / Camera": Camera sensor and resolution (e.g. "1080p FaceTime HD camera with advanced image signal processor")
+    - "Audio & Speakers": Sound system details (e.g. "Six-speaker sound system with force-cancelling woofers, Spatial Audio, 3-mic array")
 
 Output ONLY a valid JSON object matching this structure. Do not wrap in markdown code blocks if possible.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
-    });
+  const candidateModels = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
+  let lastError: any = null;
 
-    const text = response.text?.trim() || '{}';
-    const cleaned = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    const data = JSON.parse(cleaned);
+  for (const model of candidateModels) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
 
-    return {
-      product_name: data.product_name,
-      brand: data.brand || 'Brand',
-      model: data.model,
-      category: data.category || 'General',
-      price: data.price,
-      rating: typeof data.rating === 'number' ? data.rating : parseFloat(data.rating) || 4.5,
-      review_count:
-        typeof data.review_count === 'number'
-          ? data.review_count
-          : parseInt(data.review_count, 10) || 1200,
-      image_url: data.image_url,
-      key_features: Array.isArray(data.key_features) ? data.key_features : [],
-      specifications: Array.isArray(data.specifications) ? data.specifications : [],
-    };
-  } catch (err: any) {
-    console.error('Gemini product spec extraction error:', err.message);
-    return null;
+      const text = response.text?.trim() || '{}';
+      const cleaned = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      const data = JSON.parse(cleaned);
+
+      const rawSpecs: ProductSpecification[] = Array.isArray(data.specifications) ? data.specifications : [];
+      const enrichedSpecs = ensureComprehensiveDeviceSpecs(
+        rawSpecs,
+        data.product_name || titleHint,
+        data.brand || 'Brand',
+        data.category || 'General'
+      );
+
+      return {
+        product_name: data.product_name,
+        brand: data.brand || 'Brand',
+        model: data.model,
+        category: data.category || 'General',
+        price: data.price,
+        rating: typeof data.rating === 'number' ? data.rating : parseFloat(data.rating) || 4.5,
+        review_count:
+          typeof data.review_count === 'number'
+            ? data.review_count
+            : parseInt(data.review_count, 10) || 1200,
+        image_url: data.image_url,
+        key_features: Array.isArray(data.key_features) ? data.key_features : [],
+        specifications: enrichedSpecs,
+      };
+    } catch (err: any) {
+      console.warn(`Extraction attempt with model ${model} failed:`, err.message);
+      lastError = err;
+      continue;
+    }
   }
+
+  console.error('All Gemini extraction models failed:', lastError?.message);
+  return null;
 }
 
 /**
@@ -337,35 +367,47 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
     liveScraped.specifications &&
     liveScraped.specifications.length >= 4
   ) {
-    console.log(`[Scraper] Successfully scraped ${liveScraped.specifications.length} specifications directly from Amazon!`);
-    const finalProduct: AmazonProduct = {
-      id: `prod_${asin}_${Date.now()}`,
-      asin,
-      marketplace,
-      product_name: liveScraped.product_name,
-      brand: liveScraped.brand || 'Brand',
-      model: liveScraped.model,
-      category: liveScraped.category || 'General',
-      price: liveScraped.price || '$99.99',
-      rating: liveScraped.rating || 4.5,
-      review_count: liveScraped.review_count || 1250,
-      image_url: liveScraped.image_url || sampleMatch?.image_url,
-      amazon_url: targetUrl,
-      key_features:
-        liveScraped.key_features && liveScraped.key_features.length > 0
-          ? liveScraped.key_features
-          : ['High quality construction and premium performance', 'Verified Amazon customer ratings'],
-      specifications: liveScraped.specifications,
-      source: 'url',
-      created_at: new Date().toISOString(),
-    };
+    const enrichedLiveSpecs = ensureComprehensiveDeviceSpecs(
+      liveScraped.specifications,
+      liveScraped.product_name,
+      liveScraped.brand || 'Brand',
+      liveScraped.category || 'General'
+    );
 
-    return {
-      success: true,
-      product: finalProduct,
-      source: 'scraped',
-      message: 'Product specifications and details successfully scraped from Amazon.',
-    };
+    const hasCoreHardware = enrichedLiveSpecs.some(s => /processor|cpu/i.test(s.name)) &&
+                            enrichedLiveSpecs.some(s => /display|screen/i.test(s.name));
+
+    if (hasCoreHardware || enrichedLiveSpecs.length >= 10) {
+      console.log(`[Scraper] Successfully scraped & enriched ${enrichedLiveSpecs.length} specifications directly from Amazon!`);
+      const finalProduct: AmazonProduct = {
+        id: `prod_${asin}_${Date.now()}`,
+        asin,
+        marketplace,
+        product_name: liveScraped.product_name,
+        brand: liveScraped.brand || 'Brand',
+        model: liveScraped.model,
+        category: liveScraped.category || 'General',
+        price: liveScraped.price || '$99.99',
+        rating: liveScraped.rating || 4.5,
+        review_count: liveScraped.review_count || 1250,
+        image_url: liveScraped.image_url || sampleMatch?.image_url,
+        amazon_url: targetUrl,
+        key_features:
+          liveScraped.key_features && liveScraped.key_features.length > 0
+            ? liveScraped.key_features
+            : ['High quality construction and premium performance', 'Verified Amazon customer ratings'],
+        specifications: enrichedLiveSpecs,
+        source: 'url',
+        created_at: new Date().toISOString(),
+      };
+
+      return {
+        success: true,
+        product: finalProduct,
+        source: 'scraped',
+        message: 'Product specifications and details successfully scraped from Amazon.',
+      };
+    }
   }
 
   // Layer 3: If direct scrape is blocked by CAPTCHA/bot check or has partial specs, use Gemini AI extraction
@@ -374,13 +416,29 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
 
   if (geminiData && geminiData.product_name) {
     // Merge live scraped images or price if available
-    const mergedSpecs =
-      geminiData.specifications && geminiData.specifications.length > 0
-        ? geminiData.specifications
-        : liveScraped?.specifications || [
-            { name: 'ASIN', value: asin },
-            { name: 'Marketplace', value: marketplace.toUpperCase() },
-          ];
+    const combinedSpecs = [
+      ...(liveScraped?.specifications || []),
+      ...(geminiData.specifications || []),
+    ];
+    // Deduplicate specs by name
+    const specMap = new Map<string, string>();
+    for (const s of combinedSpecs) {
+      if (s.name && s.value && !specMap.has(s.name.toLowerCase())) {
+        specMap.set(s.name.toLowerCase(), s.value);
+      }
+    }
+    const dedupedSpecs: ProductSpecification[] = Array.from(specMap.entries()).map(([k, v]) => {
+      // Find original casing
+      const orig = combinedSpecs.find(s => s.name.toLowerCase() === k);
+      return { name: orig ? orig.name : k, value: v };
+    });
+
+    const finalEnrichedSpecs = ensureComprehensiveDeviceSpecs(
+      dedupedSpecs,
+      geminiData.product_name || liveScraped?.product_name || titleHint,
+      geminiData.brand || liveScraped?.brand || 'Brand',
+      geminiData.category || 'General'
+    );
 
     const finalProduct: AmazonProduct = {
       id: `prod_${asin}_${Date.now()}`,
@@ -399,7 +457,7 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
         geminiData.key_features && geminiData.key_features.length > 0
           ? geminiData.key_features
           : liveScraped?.key_features || ['Premium design and verified reliability', 'Highly rated on Amazon'],
-      specifications: mergedSpecs,
+      specifications: finalEnrichedSpecs,
       source: 'url',
       created_at: new Date().toISOString(),
     };
@@ -414,12 +472,19 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
 
   // Layer 4: Catalog or fallback
   if (sampleMatch) {
+    const enrichedSampleSpecs = ensureComprehensiveDeviceSpecs(
+      sampleMatch.specifications || [],
+      sampleMatch.product_name,
+      sampleMatch.brand || 'Brand',
+      sampleMatch.category || 'General'
+    );
     return {
       success: true,
       product: {
         ...sampleMatch,
         marketplace,
         amazon_url: targetUrl,
+        specifications: enrichedSampleSpecs,
       },
       source: 'catalog',
       message: 'Loaded verified product specifications.',
@@ -427,6 +492,19 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
   }
 
   // Fallback with inferred specifications
+  const inferredBaseSpecs: ProductSpecification[] = [
+    { name: 'ASIN', value: asin },
+    { name: 'Marketplace', value: `Amazon ${marketplace.toUpperCase()}` },
+    { name: 'Item Condition', value: 'New' },
+    { name: 'Availability', value: 'In Stock' },
+  ];
+  const finalFallbackSpecs = ensureComprehensiveDeviceSpecs(
+    inferredBaseSpecs,
+    titleHint || `Amazon Product (${asin})`,
+    'Brand',
+    'General'
+  );
+
   const fallbackProduct: AmazonProduct = {
     id: `prod_${asin}_${Date.now()}`,
     asin,
@@ -443,12 +521,7 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
       'Original manufacturer specifications',
       'Verified Amazon seller item',
     ],
-    specifications: [
-      { name: 'ASIN', value: asin },
-      { name: 'Marketplace', value: `Amazon ${marketplace.toUpperCase()}` },
-      { name: 'Item Condition', value: 'New' },
-      { name: 'Availability', value: 'In Stock' },
-    ],
+    specifications: finalFallbackSpecs,
     source: 'url',
     created_at: new Date().toISOString(),
   };

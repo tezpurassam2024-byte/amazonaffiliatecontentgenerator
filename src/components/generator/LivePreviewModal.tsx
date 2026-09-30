@@ -243,27 +243,41 @@ export const LivePreviewModal: React.FC<LivePreviewModalProps> = ({
             )}
 
             {/* Specifications Table */}
-            {product.specifications?.length > 0 && (
-              <div className="my-6 overflow-x-auto">
-                <h2 className="text-lg font-bold text-slate-900">Technical Specifications</h2>
-                <table className="mt-3 w-full border-collapse text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
-                      <th className="py-2.5 px-3 font-semibold">Specification</th>
-                      <th className="py-2.5 px-3 font-semibold">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {product.specifications.map((spec, i) => (
-                      <tr key={i} className="hover:bg-slate-50/50">
-                        <td className="py-2 px-3 font-medium text-slate-900">{spec.name}</td>
-                        <td className="py-2 px-3 text-slate-600">{spec.value}</td>
+            {(() => {
+              const activeSpecs =
+                content.specifications && content.specifications.length > 0
+                  ? content.specifications
+                  : product.specifications || [];
+
+              if (activeSpecs.length === 0) return null;
+
+              return (
+                <div className="my-6 overflow-x-auto">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-900">Technical Specifications</h2>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      {activeSpecs.length} Verified Attributes
+                    </span>
+                  </div>
+                  <table className="mt-3 w-full border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                        <th className="py-2.5 px-3 font-semibold w-1/3">Specification</th>
+                        <th className="py-2.5 px-3 font-semibold w-2/3">Details</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {activeSpecs.map((spec, i) => (
+                        <tr key={i} className="hover:bg-slate-50/50">
+                          <td className="py-2 px-3 font-medium text-slate-900">{spec.name}</td>
+                          <td className="py-2 px-3 text-slate-600">{spec.value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
 
             {/* FAQs */}
             {content.faqs && content.faqs.length > 0 && (

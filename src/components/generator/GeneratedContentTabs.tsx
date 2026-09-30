@@ -717,67 +717,79 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
         )}
 
         {/* Tab 4: Specifications */}
-        {activeTab === 'specs' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Product Specifications Table</h3>
-                <p className="text-xs text-slate-500">
-                  Only displaying verified fields for which reliable data is available
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  handleCopy(
-                    `| Specification | Detail |\n| --- | --- |\n` +
-                      (product.specifications || [])
-                        .map((s) => `| ${s.name} | ${s.value} |`)
-                        .join('\n'),
-                    'specs_table'
-                  )
-                }
-                className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                {copiedItem === 'specs_table' ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-600" /> Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5 text-slate-500" /> Copy Markdown
-                  </>
-                )}
-              </button>
-            </div>
+        {activeTab === 'specs' && (() => {
+          const activeSpecs =
+            content.specifications && content.specifications.length > 0
+              ? content.specifications
+              : product.specifications || [];
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
-                    <th className="py-3 px-4 font-bold">Attribute</th>
-                    <th className="py-3 px-4 font-bold">Specification Value</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {(product.specifications || []).map((spec, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50">
-                      <td className="py-2.5 px-4 font-semibold text-slate-900">{spec.name}</td>
-                      <td className="py-2.5 px-4 text-slate-600">{spec.value}</td>
-                    </tr>
-                  ))}
-                  {(!product.specifications || product.specifications.length === 0) && (
-                    <tr>
-                      <td colSpan={2} className="py-4 text-center italic text-slate-400">
-                        No custom specifications supplied.
-                      </td>
-                    </tr>
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">Product Specifications Table</h3>
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+                      {activeSpecs.length} Specs Verified
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Comprehensive hardware & device attributes (Processor, Display, Brightness, HDR, RAM, Storage, OS, Case Material, Thinness, Weight, Battery, Ports)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCopy(
+                      `| Specification | Detail |\n| --- | --- |\n` +
+                        activeSpecs
+                          .map((s) => `| ${s.name} | ${s.value} |`)
+                          .join('\n'),
+                      'specs_table'
+                    )
+                  }
+                  className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {copiedItem === 'specs_table' ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600" /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-slate-500" /> Copy Markdown
+                    </>
                   )}
-                </tbody>
-              </table>
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                      <th className="py-3 px-4 font-bold w-1/3">Specification Attribute</th>
+                      <th className="py-3 px-4 font-bold w-2/3">Specification Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {activeSpecs.map((spec, i) => (
+                      <tr key={i} className="hover:bg-slate-50/50">
+                        <td className="py-2.5 px-4 font-semibold text-slate-900">{spec.name}</td>
+                        <td className="py-2.5 px-4 text-slate-600">{spec.value}</td>
+                      </tr>
+                    ))}
+                    {activeSpecs.length === 0 && (
+                      <tr>
+                        <td colSpan={2} className="py-4 text-center italic text-slate-400">
+                          No custom specifications supplied.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Tab 5: Comparison Table */}
         {activeTab === 'comparison' && (
