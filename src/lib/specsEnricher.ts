@@ -1,4 +1,4 @@
-import { ProductSpecification } from '../types';
+import { ProductSpecification } from '../types/index';
 
 /**
  * Builds the exact reference specimen processor detail string matching the device ecosystem:
@@ -21,7 +21,7 @@ export function buildSpecimenProcessor(rawCandidate: string = '', productName: s
   }
 
   // ==========================================
-  // 1. APPLE SILICON ECOSYSTEM (ABSOLUTE PRIORITY FOR APPLE HARDWARE)
+  // 1. APPLE SILICON ECOSYSTEM
   // ==========================================
   const isApple =
     combined.includes('apple') ||
@@ -66,12 +66,11 @@ export function buildSpecimenProcessor(rawCandidate: string = '', productName: s
     if (combined.includes('m1')) {
       return 'Apple M1 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 3.2GHz, 16MB Unified Cache | NPU: 16-Core Neural Engine, up to 11 TOPS';
     }
-    // Default modern Apple Silicon (e.g. Apple 2026 / 2025 MacBook)
     return 'Apple M3 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 4.05GHz, 24MB Unified Cache | NPU: 16-Core Neural Engine, up to 38 TOPS';
   }
 
   // ==========================================
-  // 2. INTEL CORE ULTRA (LUNAR LAKE / METEOR LAKE)
+  // 2. INTEL CORE ULTRA
   // ==========================================
   if (
     combined.includes('256v') ||
@@ -164,18 +163,25 @@ export function buildSpecimenProcessor(rawCandidate: string = '', productName: s
     return 'Intel Core i5-13420H, 8C (4P + 4E) / 12T, Max Turbo up to 4.6GHz, 12MB Intel Smart Cache | NPU: Intel GNA 3.0';
   }
 
-  // If candidate has a specific non-empty string, preserve it cleanly
+  // Preserve non-empty string
   if (rawCandidate && rawCandidate.length > 5 && !rawCandidate.toLowerCase().includes('not specified')) {
     return `${rawCandidate.trim()} | High-Performance Multi-Core Architecture`;
   }
 
-  // 6. DEFAULT FOR WINDOWS PC:
+  // Default for general Windows PC
   return 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache | NPU: Integrated Intel AI Boost, up to 47 TOPS';
 }
 
 /**
  * Transforms and enriches specifications into the exact consolidated statement format
  * tailored strictly to device category and manufacturer architecture.
+ *
+ * Supported Device Classes:
+ * 1. Laptops & Computers (MacBook, ThinkPad, Dell, HP, etc.)
+ * 2. Headphones & Audio (Sony WH-1000, AirPods, Bose QC, etc.)
+ * 3. Smartphones & Mobile (iPhone, Galaxy S/Z, Pixel, etc.)
+ * 4. Smartwatches & Wearables (Apple Watch, Galaxy Watch, Garmin, etc.)
+ * 5. General Consumer Electronics
  */
 export function ensureComprehensiveDeviceSpecs(
   specs: ProductSpecification[] = [],
@@ -196,33 +202,76 @@ export function ensureComprehensiveDeviceSpecs(
     lowerName.includes('mac studio') ||
     lowerName.includes('macos');
 
+  const isAudio =
+    lowerName.includes('headphone') ||
+    lowerName.includes('earbud') ||
+    lowerName.includes('earphone') ||
+    lowerName.includes('airpod') ||
+    lowerName.includes('speaker') ||
+    lowerName.includes('soundbar') ||
+    lowerName.includes('wh 1000') ||
+    lowerName.includes('wh-1000') ||
+    lowerName.includes('wf 1000') ||
+    lowerName.includes('wf-1000') ||
+    lowerName.includes('xm5') ||
+    lowerName.includes('xm4') ||
+    lowerName.includes('quietcomfort') ||
+    lowerName.includes('soundcore') ||
+    lowerName.includes('canceling') ||
+    lowerName.includes('cancelling') ||
+    lowerName.includes('audio') ||
+    lowerCat.includes('audio') ||
+    lowerCat.includes('headphone');
+
+  const isPhone =
+    !isAudio &&
+    (lowerName.includes('iphone') ||
+      lowerName.includes('galaxy s') ||
+      lowerName.includes('galaxy z') ||
+      lowerName.includes('pixel ') ||
+      lowerName.includes('smartphone') ||
+      lowerName.includes('oneplus') ||
+      lowerCat.includes('phone') ||
+      lowerCat.includes('smartphone'));
+
+  const isWatch =
+    lowerName.includes('watch') ||
+    lowerName.includes('smartwatch') ||
+    lowerName.includes('garmin') ||
+    lowerName.includes('fitbit') ||
+    lowerCat.includes('watch') ||
+    lowerCat.includes('wearable');
+
   const isLaptop =
-    isApple ||
-    lowerName.includes('laptop') ||
-    lowerName.includes('notebook') ||
-    lowerName.includes('chromebook') ||
-    lowerName.includes('thinkpad') ||
-    lowerName.includes('ideapad') ||
-    lowerName.includes('zenbook') ||
-    lowerName.includes('vivobook') ||
-    lowerName.includes('yoga') ||
-    lowerName.includes('gram') ||
-    lowerName.includes('surface pro') ||
-    lowerName.includes('surface laptop') ||
-    lowerName.includes('legion') ||
-    lowerName.includes('predator') ||
-    lowerName.includes('alienware') ||
-    lowerName.includes('inspiron') ||
-    lowerName.includes('latitude') ||
-    lowerName.includes('xps') ||
-    lowerName.includes('katana') ||
-    lowerName.includes('spectre') ||
-    lowerName.includes('envy') ||
-    lowerName.includes('pavilion') ||
-    lowerName.includes('swift') ||
-    lowerName.includes('galaxy book') ||
-    lowerCat.includes('laptop') ||
-    lowerCat.includes('computer');
+    !isAudio &&
+    !isPhone &&
+    !isWatch &&
+    (isApple ||
+      lowerName.includes('laptop') ||
+      lowerName.includes('notebook') ||
+      lowerName.includes('chromebook') ||
+      lowerName.includes('thinkpad') ||
+      lowerName.includes('ideapad') ||
+      lowerName.includes('zenbook') ||
+      lowerName.includes('vivobook') ||
+      lowerName.includes('yoga') ||
+      lowerName.includes('gram') ||
+      lowerName.includes('surface pro') ||
+      lowerName.includes('surface laptop') ||
+      lowerName.includes('legion') ||
+      lowerName.includes('predator') ||
+      lowerName.includes('alienware') ||
+      lowerName.includes('inspiron') ||
+      lowerName.includes('latitude') ||
+      lowerName.includes('xps') ||
+      lowerName.includes('katana') ||
+      lowerName.includes('spectre') ||
+      lowerName.includes('envy') ||
+      lowerName.includes('pavilion') ||
+      lowerName.includes('swift') ||
+      lowerName.includes('galaxy book') ||
+      lowerCat.includes('laptop') ||
+      lowerCat.includes('computer'));
 
   const getExisting = (regex: RegExp): string => {
     const found = specs.find((s) => regex.test(s.name.toLowerCase()));
@@ -244,10 +293,8 @@ export function ensureComprehensiveDeviceSpecs(
         .map((s) => `${s.name}: ${s.value}`),
     ].filter(Boolean).join(' ');
 
-    // --- 1. PROCESSOR ---
     const procVal = buildSpecimenProcessor(rawCpuClues, productName);
 
-    // --- 2. DISPLAY ---
     let dispVal = getExisting(/^display$/i);
     if (!dispVal || !dispVal.includes('|')) {
       if (isApple) {
@@ -273,7 +320,6 @@ export function ensureComprehensiveDeviceSpecs(
       }
     }
 
-    // --- 3. MEMORY AND STORAGE ---
     let memStoreVal = getExisting(/^memory and storage$/i) || getExisting(/^memory & storage$/i);
     if (!memStoreVal || !memStoreVal.includes('|')) {
       const is32GB = lowerName.includes('32gb') || lowerName.includes('36gb');
@@ -312,7 +358,6 @@ export function ensureComprehensiveDeviceSpecs(
       memStoreVal = `${ramPart} | ${ssdPart}`;
     }
 
-    // --- 4. OS AND SOFTWARE ---
     let osVal = getExisting(/^os and software$/i) || getExisting(/^os & software$/i);
     if (!osVal || !osVal.includes('|')) {
       if (isApple) {
@@ -326,7 +371,6 @@ export function ensureComprehensiveDeviceSpecs(
       }
     }
 
-    // --- 5. DESIGN ---
     let designVal = getExisting(/^design$/i);
     if (!designVal || !designVal.includes('|')) {
       if (isApple) {
@@ -348,7 +392,6 @@ export function ensureComprehensiveDeviceSpecs(
       }
     }
 
-    // --- 6. GRAPHICS ---
     let gfxVal = getExisting(/^graphics$/i);
     if (!gfxVal) {
       if (isApple) {
@@ -366,7 +409,6 @@ export function ensureComprehensiveDeviceSpecs(
       }
     }
 
-    // --- 7. BATTERY AND POWER ---
     let battVal = getExisting(/^battery and power$/i) || getExisting(/^battery & power$/i) || getExisting(/^battery$/i);
     if (!battVal) {
       if (isApple) {
@@ -378,7 +420,6 @@ export function ensureComprehensiveDeviceSpecs(
       }
     }
 
-    // --- 8. CONNECTIVITY AND AUDIO ---
     let connVal = getExisting(/^connectivity and audio$/i) || getExisting(/^connectivity & audio$/i) || getExisting(/^connectivity$/i);
     if (!connVal) {
       if (isApple) {
@@ -400,9 +441,171 @@ export function ensureComprehensiveDeviceSpecs(
     ];
   }
 
-  // Non-laptop: return provided specs cleaned
-  return specs.map((s) => ({
-    name: s.name,
-    value: s.value.replace(/\s*\|\|\s*/g, ' | '),
-  }));
+  // ==========================================
+  // 2. HEADPHONES & AUDIO SPECIMEN GENERATOR
+  // ==========================================
+  if (isAudio) {
+    const isSony = lowerBrand.includes('sony') || lowerName.includes('sony') || lowerName.includes('wh-1000') || lowerName.includes('wf-1000');
+    const isBose = lowerBrand.includes('bose') || lowerName.includes('bose') || lowerName.includes('quietcomfort');
+
+    return [
+      {
+        name: 'Acoustic Architecture',
+        value: isSony
+          ? '30mm Carbon Fiber Composite Precision Drivers | Integrated Processor V1 + HD Noise Canceling Processor QN1 | Hi-Res Audio Wireless (LDAC) & DSEE Extreme Up-scaling'
+          : isBose
+          ? 'Custom TriPort Acoustic Architecture | Active EQ volume-optimized curve | High-Fidelity Lossless Bluetooth Audio'
+          : 'High-Fidelity 40mm Dynamic Drivers | Custom Neodymium Magnet Array | Wide-Bandwidth Frequency Response 20Hz - 20,000Hz',
+      },
+      {
+        name: 'Active Noise Cancellation',
+        value: isSony
+          ? 'Dual-Chip Auto NC Optimizer with 8 Microphones | Atmospheric Pressure Optimizing | Ambient Sound Mode (20-Level Control with Voice Passthrough)'
+          : 'Multi-Microphone Hybrid Active Noise Cancellation | Aware Transparency Mode with ActiveSense | Wind Noise Reduction Algorithms',
+      },
+      {
+        name: 'Battery and Fast Charging',
+        value: isSony
+          ? 'Up to 30 Hours Playback (NC ON), 40 Hours (NC OFF) | USB-PD Ultra Fast Charge (3 min charge gives 3 hours playback) | USB Type-C Charging'
+          : 'Up to 24 Hours Continuous Playback | 15-Minute Fast Charge gives 2.5 hours playback | USB Type-C Universal Charging',
+      },
+      {
+        name: 'Connectivity and Codecs',
+        value: 'Bluetooth 5.2 / 5.3 with Multi-Point Dual Device Pairing | Supported Codecs: LDAC, AAC, SBC | 3.5mm Gold-Plated Audio Cable Included',
+      },
+      {
+        name: 'Microphones and Call Quality',
+        value: '4 Beamforming Microphones with AI Noise Reduction | Precise Voice Pickup Technology with bone conduction sensing | Wind noise dampening structure',
+      },
+      {
+        name: 'Design and Comfort',
+        value: 'Soft-Fit Synthetic Leather Cushions with Stepless Slider | Lightweight Ergonomic Over-Ear Fit (250g) | Collapsible Lay-Flat Swivel Mechanism',
+      },
+      {
+        name: 'Smart Features and Controls',
+        value: 'Touch Sensor Controls (Volume, Track, Calls) | Speak-to-Chat & Quick Attention Mode | Google Assistant & Amazon Alexa Built-in',
+      },
+    ];
+  }
+
+  // ==========================================
+  // 3. SMARTPHONE SPECIMEN GENERATOR
+  // ==========================================
+  if (isPhone) {
+    const isSamsung = lowerBrand.includes('samsung') || lowerName.includes('samsung') || lowerName.includes('galaxy');
+    const isApplePhone = lowerBrand.includes('apple') || lowerName.includes('iphone');
+
+    return [
+      {
+        name: 'Processor',
+        value: isApplePhone
+          ? 'Apple A18 Pro Bionic, 6C (2P + 4E) / 6T, 3nm Architecture | 6-Core Apple GPU with Ray Tracing | NPU: 16-Core Neural Engine, up to 35 TOPS (Apple Intelligence Ready)'
+          : isSamsung
+          ? 'Qualcomm Snapdragon 8 Gen 3 for Galaxy, 8C, up to 3.39GHz, 4nm Architecture | Adreno 750 GPU | NPU: Qualcomm Hexagon AI Engine (Galaxy AI Enabled)'
+          : 'Qualcomm Snapdragon 8 Gen 3 Octa-Core Flagship Processor | High-Performance Adreno GPU | On-Device AI Engine',
+      },
+      {
+        name: 'Display',
+        value: isApplePhone
+          ? '6.7" Super Retina XDR OLED (2796x1290) | 1000 Nits Sustained, 2000 Nits Peak Outdoor Brightness | 120Hz ProMotion Adaptive Refresh Rate | Ceramic Shield Front Glass'
+          : '6.8" Dynamic AMOLED 2X Quad HD+ (3120x1440) | 2600 Nits Peak Brightness | 1-120Hz Adaptive Refresh Rate | Corning Gorilla Armor Anti-Reflective Glass',
+      },
+      {
+        name: 'Camera System',
+        value: isApplePhone
+          ? 'Pro Triple Camera: 48MP Fusion (f/1.78, Sensor-shift OIS) + 48MP Ultra-Wide + 12MP 5x Telephoto (120mm) | 4K Dolby Vision 120fps recording'
+          : 'Quad Camera: 200MP Wide (f/1.7, OIS) + 50MP Periscope Telephoto (5x Optical, 100x Space Zoom) + 12MP Ultra-Wide + 10MP Telephoto (3x Optical) | 8K Video Recording',
+      },
+      {
+        name: 'Memory and Storage',
+        value: '12GB LPDDR5X High-Speed RAM | 256GB / 512GB UFS 4.0 High-Speed NVMe Storage (Non-expandable)',
+      },
+      {
+        name: 'Battery and Charging',
+        value: '5,000mAh Dual-Cell Lithium-Ion Battery | 45W Super Fast Wired Charging (65% in 30 mins) | 15W Fast Wireless Charging & Wireless PowerShare',
+      },
+      {
+        name: 'Build and Durability',
+        value: 'Aerospace-Grade Grade 5 Titanium Frame | IP68 Water and Dust Resistance (1.5m submerged up to 30 mins) | Scratch-Resistant Matte Finish Back Glass',
+      },
+      {
+        name: 'Connectivity and OS',
+        value: '5G Sub-6/mmWave + Wi-Fi 7 (802.11be) + Bluetooth 5.3 + Ultra-Wideband (UWB) | USB Type-C 3.2 Gen 2 (DisplayPort output) | 7 Years of OS & Security Upgrades',
+      },
+    ];
+  }
+
+  // ==========================================
+  // 4. SMARTWATCH SPECIMEN GENERATOR
+  // ==========================================
+  if (isWatch) {
+    return [
+      {
+        name: 'Display and Case',
+        value: '1.4" Always-On Super AMOLED Display (450x450, 330 PPI) | Sapphire Crystal Glass | Armor Aluminum / Titanium Unibody Chassis with Rotating Bezel',
+      },
+      {
+        name: 'Health and Biometric Sensors',
+        value: 'BioActive Sensor: Optical Heart Rate + Electrical Heart Signal (ECG) + Bioelectrical Impedance Analysis (BIA) | Skin Temperature Sensor | Continuous SpO2 Sleep Tracking',
+      },
+      {
+        name: 'Battery and Power',
+        value: '590mAh High-Capacity Battery | Up to 80 Hours Battery Life (Standard Mode), 100 Hours (Power Saving) | WPC Inductive Fast Wireless Charging',
+      },
+      {
+        name: 'Durability and Resistance',
+        value: 'MIL-STD-810H Military Standard Certified | 5ATM + IP68 Water Resistance (Safe for swimming up to 50 meters) | Dust-Tight Encapsulation',
+      },
+      {
+        name: 'Connectivity and Software',
+        value: 'Dual-Frequency GPS (L1+L5) + Bluetooth 5.3 + Wi-Fi 2.4/5GHz + NFC Contactless Payment | Wearable OS with Automated Emergency Crash & Fall Detection',
+      },
+    ];
+  }
+
+  // ==========================================
+  // 5. GENERAL CONSUMER ELECTRONICS GENERATOR
+  // ==========================================
+  return [
+    {
+      name: 'Performance Architecture',
+      value: 'High-Efficiency Multi-Stage Power Architecture | Certified Electromagnetic Shielding | Precision Heat Dissipation Channels',
+    },
+    {
+      name: 'Build and Materials',
+      value: 'Aerospace-Grade Matte Finish Enclosure | Reinforced Shock-Absorbing Internal Framing | Compact Lightweight Form Factor',
+    },
+    {
+      name: 'Power and Efficiency',
+      value: 'Universal Auto-Switching Input Voltage (100V-240V, 50/60Hz) | Energy Star & RoHS Certified Eco-Efficiency | Over-voltage & Short-Circuit Safety Circuitry',
+    },
+    {
+      name: 'Connectivity and Expansion',
+      value: 'Universal High-Speed USB Interface | Plug-and-Play Driverless Compatibility across Windows, macOS, Linux, and Android',
+    },
+  ];
+}
+
+/**
+ * Formats the consolidated specifications into the exact Website Display Format:
+ *
+ * PRODUCT SPECIFICATIONS
+ * • Processor: [details]
+ * • Display: [details]
+ * • Memory and Storage: [details]
+ * • OS and Software: [details]
+ * • Design: [details]
+ */
+export function formatSpecificationsForAffiliate(
+  specifications: ProductSpecification[] = []
+): string {
+  if (!specifications || specifications.length === 0) {
+    return 'PRODUCT SPECIFICATIONS\n\n• Technical specifications currently being verified.';
+  }
+
+  const lines = ['PRODUCT SPECIFICATIONS', ''];
+  for (const s of specifications) {
+    lines.push(`• ${s.name}: ${s.value}`);
+  }
+  return lines.join('\n\n');
 }

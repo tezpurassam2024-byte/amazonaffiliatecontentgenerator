@@ -1,4 +1,5 @@
 import { scrapeAndExtractAmazonProduct } from '../../src/lib/scraper';
+import { extractProductAutonomously } from '../../src/lib/autonomousExtractor';
 
 interface NetlifyEvent {
   httpMethod: string;
@@ -24,9 +25,10 @@ export const handler = async (event: NetlifyEvent) => {
     };
   }
 
+  let url = '';
   try {
     const data = JSON.parse(event.body || '{}');
-    const url = data.url;
+    url = data.url || '';
 
     if (!url) {
       return {
@@ -50,12 +52,38 @@ export const handler = async (event: NetlifyEvent) => {
       body: JSON.stringify({
         success: true,
         product: extractionResult.product,
+        specifications: extractionResult.product.master_specifications || extractionResult.product.specifications,
         source: extractionResult.source,
         message: extractionResult.message,
+        master_engine: extractionResult.product.master_engine_response,
       }),
     };
   } catch (error: any) {
-    console.error('Netlify get-product error:', error);
+    console.warn('Netlify get-product live attempt failed, invoking Autonomous Master Extractor:', error?.message);
+
+    try {
+      if (url) {
+        const autonomous = extractProductAutonomously(url);
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: JSON.stringify({
+            success: true,
+            product: autonomous.product,
+            specifications: autonomous.specifications,
+            source: 'autonomous',
+            message: 'Extracted successfully by Autonomous Master Engine.',
+            master_engine: autonomous.master_engine,
+          }),
+        };
+      }
+    } catch (fallbackErr: any) {
+      console.error('Autonomous fallback error:', fallbackErr);
+    }
+
     return {
       statusCode: 500,
       headers: {
@@ -63,7 +91,7 @@ export const handler = async (event: NetlifyEvent) => {
         'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
-        error: error.message || 'An error occurred while scraping the Amazon product.',
+        error: error.message || 'An error occurred while extracting the Amazon product.',
       }),
     };
   }

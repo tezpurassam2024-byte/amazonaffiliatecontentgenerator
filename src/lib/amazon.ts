@@ -207,6 +207,26 @@ export function parseAmazonUrl(rawUrl: string): {
 }
 
 /**
+ * Extracts slug text from Amazon URL path (e.g. /Sony-WH-1000XM5-Canceling-Headphones/dp/...)
+ */
+export function extractTitleFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    const dpIndex = parts.findIndex((p) => p.toLowerCase() === 'dp' || p.toLowerCase() === 'product');
+    if (dpIndex > 0) {
+      const slug = parts[dpIndex - 1];
+      if (slug && !slug.toLowerCase().includes('amazon') && slug.length > 3) {
+        return slug.replace(/-/g, ' ').trim();
+      }
+    }
+  } catch {
+    // Ignore URL parse error
+  }
+  return '';
+}
+
+/**
  * Appends or updates Amazon Associate Tag securely
  */
 export function buildAffiliateUrl(

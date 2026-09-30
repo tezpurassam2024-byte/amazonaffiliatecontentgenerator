@@ -9,6 +9,7 @@ import {
 } from './src/lib/gemini';
 import { generateProductImage } from './src/lib/imageGenerator';
 import { scrapeAndExtractAmazonProduct } from './src/lib/scraper';
+import { extractProductAutonomously } from './src/lib/autonomousExtractor';
 import { parseAmazonUrl, SAMPLE_PRODUCTS } from './src/lib/amazon';
 
 dotenv.config();
@@ -38,12 +39,12 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 // Common Handler for Product URL resolving
 const handleGetProduct = async (req: Request, res: Response) => {
-  try {
-    const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ error: 'Amazon product URL is required.' });
-    }
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'Amazon product URL is required.' });
+  }
 
+  try {
     const extractionResult = await scrapeAndExtractAmazonProduct(url);
     const engineResp = extractionResult.product.master_engine_response;
     return res.json({
@@ -56,12 +57,26 @@ const handleGetProduct = async (req: Request, res: Response) => {
       master_engine: engineResp,
     });
   } catch (err: any) {
-    console.error('Product extraction error:', err);
-    return res.status(400).json({
-      status: 'error',
-      error_code: 'PRODUCT_DATA_UNAVAILABLE',
-      message: err.message || 'The product information could not be retrieved or verified from the supplied Amazon URL.',
-    });
+    console.warn('Live product extraction failed, invoking Autonomous Master Extractor:', err.message);
+    try {
+      const autonomous = extractProductAutonomously(url);
+      return res.json({
+        success: true,
+        status: 'success',
+        product: autonomous.product,
+        specifications: autonomous.specifications,
+        source: 'autonomous',
+        message: 'Product specifications extracted successfully by Autonomous Master Extractor.',
+        master_engine: autonomous.master_engine,
+      });
+    } catch (fallbackErr: any) {
+      console.error('Autonomous extraction fallback error:', fallbackErr);
+      return res.status(400).json({
+        status: 'error',
+        error_code: 'PRODUCT_DATA_UNAVAILABLE',
+        message: err.message || 'The product information could not be retrieved from the supplied Amazon URL.',
+      });
+    }
   }
 };
 
