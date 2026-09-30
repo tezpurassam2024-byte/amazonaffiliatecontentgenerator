@@ -72,8 +72,8 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
 
     setIsScraping(true);
 
-    // Call endpoints
-    const endpoints = ['/.netlify/functions/get-product', '/api/get-product'];
+    // Call endpoints (prioritize express /api/get-product)
+    const endpoints = ['/api/get-product', '/.netlify/functions/get-product'];
     let fetchedData: any = null;
 
     for (const endpoint of endpoints) {
@@ -99,7 +99,18 @@ export const ProductInputModal: React.FC<ProductInputModalProps> = ({
     setIsScraping(false);
 
     if (fetchedData && fetchedData.product) {
-      onProductSelected(fetchedData.product);
+      const mergedProduct: AmazonProduct = {
+        ...fetchedData.product,
+        master_specifications:
+          fetchedData.product.master_specifications || fetchedData.specifications,
+        specifications:
+          fetchedData.product.specifications && fetchedData.product.specifications.length > 0
+            ? fetchedData.product.specifications
+            : fetchedData.specifications || [],
+        master_engine_response:
+          fetchedData.product.master_engine_response || fetchedData.master_engine,
+      };
+      onProductSelected(mergedProduct);
       return;
     }
 
