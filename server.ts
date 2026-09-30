@@ -45,17 +45,22 @@ const handleGetProduct = async (req: Request, res: Response) => {
     }
 
     const extractionResult = await scrapeAndExtractAmazonProduct(url);
+    const engineResp = extractionResult.product.master_engine_response;
     return res.json({
       success: true,
+      status: 'success',
       product: extractionResult.product,
+      specifications: extractionResult.product.master_specifications || extractionResult.product.specifications,
       source: extractionResult.source,
       message: extractionResult.message,
-      master_extraction: extractionResult.product.master_extraction,
+      master_engine: engineResp,
     });
   } catch (err: any) {
     console.error('Product extraction error:', err);
     return res.status(400).json({
-      error: err.message || 'Failed to extract product details from Amazon URL.',
+      status: 'error',
+      error_code: 'PRODUCT_DATA_UNAVAILABLE',
+      message: err.message || 'The product information could not be retrieved or verified from the supplied Amazon URL.',
     });
   }
 };

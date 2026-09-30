@@ -31,6 +31,7 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
 }) => {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
+  const [copiedBullets, setCopiedBullets] = useState(false);
 
   const marketplaceMeta = SUPPORTED_MARKETPLACES[product.marketplace] || {
     flag: '🌐',
@@ -45,38 +46,49 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
     return <span className="italic text-slate-400">Not specified</span>;
   };
 
-  const masterJsonString = JSON.stringify(
-    product.master_extraction || {
-      product: {
-        name: product.product_name,
-        brand: product.brand,
-        model: product.model || 'Not specified',
-        model_number: product.model_number || 'Not specified',
-        asin: product.asin,
-        category: product.category,
-        variant: product.variant || 'Not specified',
-      },
-      specifications: Object.fromEntries(
-        (product.specifications || []).map((s) => [
-          s.name.toLowerCase().replace(/[\s/&-]+/g, '_'),
-          s.value,
-        ])
-      ),
-      marketing_highlights: product.marketing_highlights || product.key_features || [],
-      source: {
-        source_type: 'Amazon',
-        source_url: product.amazon_url,
-        data_confidence: product.data_confidence || 'High',
-      },
+  // Get consolidated specifications list
+  const consolidatedList = (product.master_specifications && product.master_specifications.length > 0)
+    ? product.master_specifications
+    : (product.specifications || []).map((s) => ({ category: s.name, details: s.value }));
+
+  // Master Engine JSON Schema contract matching exact instruction
+  const masterEnginePayload = product.master_engine_response || {
+    status: 'success',
+    product: {
+      name: product.product_name,
+      brand: product.brand,
+      model: product.model || 'Standard',
+      model_number: product.model_number || 'N/A',
+      asin: product.asin,
+      category: product.category,
+      variant: product.variant || 'Standard Configuration',
     },
-    null,
-    2
-  );
+    specifications: consolidatedList.map((s) => ({
+      category: s.category,
+      details: s.details,
+    })),
+    source: {
+      source_type: 'Amazon',
+      source_url: product.amazon_url,
+    },
+  };
+
+  const masterJsonString = JSON.stringify(masterEnginePayload, null, 2);
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(masterJsonString);
     setCopiedJson(true);
     setTimeout(() => setCopiedJson(false), 2000);
+  };
+
+  const formattedBulletText = ['PRODUCT SPECIFICATIONS', '']
+    .concat(consolidatedList.map((s) => `• ${s.category}: ${s.details}`))
+    .join('\n\n');
+
+  const handleCopyBullets = () => {
+    navigator.clipboard.writeText(formattedBulletText);
+    setCopiedBullets(true);
+    setTimeout(() => setCopiedBullets(false), 2000);
   };
 
   const confidenceBadge = () => {
@@ -247,32 +259,50 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
             </ul>
           </div>
 
-          {/* Extracted Technical Specifications Table */}
-          {product.specifications && product.specifications.length > 0 && (
+          {/* Consolidated Product Specifications Section (Website Display Format) */}
+          {consolidatedList.length > 0 && (
             <div className="mt-4 pt-3 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Verified Technical Specifications ({product.specifications.length})
-                </span>
-                <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-                  Zero Hallucination
-                </span>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    PRODUCT SPECIFICATIONS
+                  </span>
+                  <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    {consolidatedList.length} Consolidated Statements
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyBullets}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-orange-600 bg-white border border-slate-200 hover:border-orange-300 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                  title="Copy bullet list in website format"
+                >
+                  {copiedBullets ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Copy Specs List</span>
+                    </>
+                  )}
+                </button>
               </div>
-              <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-1">
-                <table className="w-full text-left text-xs">
-                  <tbody className="divide-y divide-slate-200/60">
-                    {product.specifications.map((spec, i) => (
-                      <tr key={i} className="hover:bg-white transition-colors">
-                        <td className="py-2 px-3 font-bold text-slate-800 w-1/4 align-top">
-                          {spec.name}
-                        </td>
-                        <td className="py-2 px-3 text-slate-700 w-3/4 leading-relaxed font-mono text-[11.5px]">
-                          {spec.value}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2.5 font-sans">
+                {consolidatedList.map((spec, i) => (
+                  <div key={i} className="flex items-start gap-2.5 text-xs text-slate-900 leading-relaxed">
+                    <span className="text-orange-600 font-bold text-sm leading-none shrink-0">•</span>
+                    <div>
+                      <strong className="text-slate-900 font-bold">{spec.category}:</strong>{' '}
+                      <span className="text-slate-700 font-mono text-[11.5px] leading-relaxed">
+                        {spec.details}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

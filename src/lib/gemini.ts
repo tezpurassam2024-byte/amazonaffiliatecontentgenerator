@@ -68,7 +68,7 @@ CRITICAL EDITORIAL & INTEGRITY RULES:
 /**
  * Models attempted in order of availability and speed
  */
-const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
+const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-pro'];
 
 /**
  * Helper to call Gemini models with resilient fallback across candidate models
@@ -207,8 +207,8 @@ Return the entire response in strict JSON format.`;
     // Merge & enrich specifications to guarantee processor, display, brightness, RAM, storage, etc.
     const rawAiSpecs: ProductSpecification[] = Array.isArray(parsed.specifications) ? parsed.specifications : [];
     const combinedSpecs = [
-      ...rawAiSpecs,
       ...(product.specifications || []),
+      ...rawAiSpecs,
     ];
     const specMap = new Map<string, string>();
     for (const s of combinedSpecs) {
@@ -254,9 +254,7 @@ Return the entire response in strict JSON format.`;
         .map((c: string) => `- ${c}`)
         .join('\n')}\n`,
       `## Product Specifications\n`,
-      `| Specification | Detail |\n| --- | --- |\n` +
-        finalComprehensiveSpecs.map((s) => `| ${s.name} | ${s.value} |`).join('\n') +
-        '\n',
+      finalComprehensiveSpecs.map((s) => `• **${s.name}:** ${s.value}`).join('\n\n') + '\n',
       `## Who Should Buy This?\n${review.who_should_buy || ''}\n`,
       `## Who Should Consider Alternatives?\n${review.who_should_consider_alternatives || ''}\n`,
       `## Frequently Asked Questions\n` +

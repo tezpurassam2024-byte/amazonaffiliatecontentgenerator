@@ -83,6 +83,37 @@ export interface MasterExtractionResult {
   };
 }
 
+export interface MasterConsolidatedSpec {
+  category: string;
+  details: string;
+}
+
+export interface MasterEngineSuccessResponse {
+  status: 'success';
+  product: {
+    name: string;
+    brand: string;
+    model: string;
+    model_number: string;
+    asin: string;
+    category: string;
+    variant: string;
+  };
+  specifications: MasterConsolidatedSpec[];
+  source: {
+    source_type: 'Amazon';
+    source_url: string;
+  };
+}
+
+export interface MasterEngineErrorResponse {
+  status: 'error';
+  error_code: 'PRODUCT_DATA_UNAVAILABLE';
+  message: string;
+}
+
+export type MasterEngineResponse = MasterEngineSuccessResponse | MasterEngineErrorResponse;
+
 export interface AmazonProduct {
   id: string;
   asin: string;
@@ -100,6 +131,8 @@ export interface AmazonProduct {
   amazon_url: string;
   key_features: string[];
   specifications: ProductSpecification[];
+  master_specifications?: MasterConsolidatedSpec[];
+  master_engine_response?: MasterEngineSuccessResponse;
   marketing_highlights?: string[];
   data_confidence?: 'High' | 'Medium' | 'Low';
   master_extraction?: MasterExtractionResult;

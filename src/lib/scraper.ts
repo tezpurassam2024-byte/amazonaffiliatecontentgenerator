@@ -6,9 +6,9 @@ import { getGeminiClient } from './gemini';
 import { ensureComprehensiveDeviceSpecs } from './specsEnricher';
 import {
   extractWithMasterEngine,
-  convertMasterResultToAmazonProduct,
+  formatSpecificationsForAffiliate,
 } from './masterExtractor';
-export { ensureComprehensiveDeviceSpecs };
+export { ensureComprehensiveDeviceSpecs, formatSpecificationsForAffiliate };
 
 /**
  * Extracts slug text from Amazon URL path (e.g. /Sony-WH-1000XM5-Canceling-Headphones/dp/...)
@@ -283,7 +283,7 @@ Use these EXACT key names:
 
 Output ONLY a valid JSON object matching this structure. Do not wrap in markdown code blocks if possible.`;
 
-  const candidateModels = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
+  const candidateModels = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-pro'];
   let lastError: any = null;
 
   for (const model of candidateModels) {
@@ -362,8 +362,8 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
   const liveScraped = await fetchAndParseAmazonHtml(targetUrl);
 
   // Step 2: Execute Master Product Data Extraction Engine with Zero-Hallucination rules
-  console.log(`[Master Scraper] Running Master System Instruction (Source Fidelity, No Hallucination)...`);
-  const masterResult = await extractWithMasterEngine(targetUrl, {
+  console.log(`[Master Scraper] Running Master Product Specification Engine (Consolidated Statements)...`);
+  const { engineResponse, product: extractedProduct } = await extractWithMasterEngine(targetUrl, {
     asin,
     marketplace,
     title: liveScraped?.product_name || titleHint || sampleMatch?.product_name,
@@ -378,47 +378,29 @@ export async function scrapeAndExtractAmazonProduct(rawUrl: string): Promise<{
 
   // Step 3: Check if access was impossible
   if (
-    masterResult.error &&
-    masterResult.source.data_confidence === 'Low' &&
+    engineResponse.status === 'error' &&
     !liveScraped?.product_name &&
     !sampleMatch &&
     !titleHint
   ) {
     throw new Error(
-      masterResult.error.message || 'The Amazon product information could not be accessed or verified.'
+      engineResponse.message || 'Product information could not be retrieved from the supplied Amazon URL.'
     );
   }
 
-  // Step 4: Convert master extraction result into AmazonProduct model
-  const baseProduct = convertMasterResultToAmazonProduct(masterResult, {
-    id: `prod_${asin}_${Date.now()}`,
-    asin,
-    marketplace,
-    price: liveScraped?.price || sampleMatch?.price || '$99.99',
-    rating: liveScraped?.rating || sampleMatch?.rating || 4.5,
-    review_count: liveScraped?.review_count || sampleMatch?.review_count || 1200,
-    image_url: liveScraped?.image_url || sampleMatch?.image_url,
-    amazon_url: targetUrl,
-  });
-
-  // Synthesize and normalize structured device specifications for presentation
-  const enrichedSpecs = ensureComprehensiveDeviceSpecs(
-    baseProduct.specifications,
-    baseProduct.product_name,
-    baseProduct.brand,
-    baseProduct.category
-  );
-
   const finalProduct: AmazonProduct = {
-    ...baseProduct,
-    specifications: enrichedSpecs.length > 0 ? enrichedSpecs : baseProduct.specifications,
-    master_extraction: masterResult,
+    ...extractedProduct,
+    price: liveScraped?.price || extractedProduct.price || sampleMatch?.price || '$99.99',
+    rating: liveScraped?.rating || extractedProduct.rating || sampleMatch?.rating || 4.5,
+    review_count: liveScraped?.review_count || extractedProduct.review_count || sampleMatch?.review_count || 1200,
+    image_url: liveScraped?.image_url || extractedProduct.image_url || sampleMatch?.image_url,
+    amazon_url: targetUrl,
   };
 
   return {
     success: true,
     product: finalProduct,
     source: liveScraped?.product_name ? 'scraped' : 'gemini_extracted',
-    message: `Extracted under Master System Instruction (${masterResult.source.data_confidence} confidence level).`,
+    message: 'Consolidated specifications generated successfully by Master Engine.',
   };
 }
