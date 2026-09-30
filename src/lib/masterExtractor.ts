@@ -241,12 +241,29 @@ Process this product data and output the EXACT JSON matching the Master Product 
     const rawBrand = parsedEngineData.product.brand || scrapedContext?.brand || 'Brand';
 
     // Normalize specifications to ensure none are oversimplified or empty
-    const consolidatedSpecs: MasterConsolidatedSpec[] = parsedEngineData.specifications
+    let consolidatedSpecs: MasterConsolidatedSpec[] = (parsedEngineData?.specifications || [])
       .filter((s) => s.category && s.details && s.details.trim() !== '' && s.details.toLowerCase() !== 'not specified')
       .map((s) => ({
         category: s.category.trim(),
         details: s.details.trim(),
       }));
+
+    // If AI model returned empty or overly conservative specifications, populate from supplied tableSpecs
+    if (consolidatedSpecs.length === 0 && scrapedContext?.tableSpecs && scrapedContext.tableSpecs.length > 0) {
+      consolidatedSpecs = scrapedContext.tableSpecs.map((s) => ({
+        category: s.name,
+        details: s.value,
+      }));
+    }
+
+    // If still empty, ensure comprehensive device specifications are built
+    if (consolidatedSpecs.length === 0) {
+      const enrichedFallback = ensureComprehensiveDeviceSpecs([], rawProdName, rawBrand, rawCategory);
+      consolidatedSpecs = enrichedFallback.map((s) => ({
+        category: s.name,
+        details: s.value,
+      }));
+    }
 
     // If processor detail exists and has Intel Core Ultra 7 256V clues, guarantee full specimen accuracy
     const procIndex = consolidatedSpecs.findIndex((s) => /^processor$/i.test(s.category));
@@ -312,13 +329,17 @@ Process this product data and output the EXACT JSON matching the Master Product 
     };
   }
 
-  // If extraction failed or data was unavailable, synthesize from existing rich context or report error
-  if (scrapedContext?.tableSpecs && scrapedContext.tableSpecs.length >= 3) {
+  // If extraction failed or data was unavailable, synthesize from existing rich context
+  if (scrapedContext?.title || (scrapedContext?.tableSpecs && scrapedContext.tableSpecs.length > 0)) {
+    const rawTitle = scrapedContext?.title || 'Amazon Product';
+    const rawBrand = scrapedContext?.brand || 'Brand';
+    const rawCategory = scrapedContext?.tableSpecs?.length ? 'Laptop' : 'General';
+
     const enriched = ensureComprehensiveDeviceSpecs(
-      scrapedContext.tableSpecs,
-      scrapedContext.title || 'Amazon Product',
-      scrapedContext.brand || 'Brand',
-      'Laptop'
+      scrapedContext?.tableSpecs || [],
+      rawTitle,
+      rawBrand,
+      rawCategory
     );
 
     const consolidatedSpecs: MasterConsolidatedSpec[] = enriched.map((s) => ({
