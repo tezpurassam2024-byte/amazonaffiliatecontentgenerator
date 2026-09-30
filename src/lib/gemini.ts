@@ -168,24 +168,16 @@ SECTIONS TO GENERATE:
    - "who_should_consider_alternatives"
    - "final_verdict"
 3. "pros_cons": Object with "pros" (array of strings) and "cons" (array of strings).
-4. "specifications": Comprehensive array of at least 15 to 25 technical specifications ({ "name": string, "value": string }). For laptops, computers, monitors, phones, audio, and electronics, you MUST explicitly include all of the following specific attributes:
-   - "Processor / CPU": Exact processor model, cores, and clock speed (e.g. Apple M3 chip 8-core CPU / Intel Core i7-13700H / AMD Ryzen 7 7840HS)
-   - "Display Type": Specific panel technology (e.g. Liquid Retina IPS with True Tone, OLED, AMOLED, Anti-Glare IPS)
-   - "Screen Size": Diagonal size & aspect ratio (e.g. 15.3-inch diagonal, 16:10)
-   - "Screen Resolution & Refresh Rate": (e.g. 2880 x 1864, 60Hz / 120Hz ProMotion)
-   - "Display Brightness (Typical)": Sustained brightness in nits (e.g. 500 nits typical)
-   - "Peak Brightness": Maximum peak nits (e.g. 500 nits SDR, 1000 nits peak, 1600 nits HDR peak)
-   - "Display HDR Details": Specific HDR formats (e.g. Dolby Vision, HDR10, Wide Color P3, 1 Billion Colors)
-   - "RAM (Memory) Details": Capacity, type, and speed (e.g. 16GB Unified Memory / LPDDR5X)
-   - "Storage Details": Capacity and interface (e.g. 512GB PCIe 4.0 NVMe SSD)
-   - "Software / Operating System": Exact OS (e.g. Windows 11 Home / Windows 11 Pro / macOS Sonoma with Apple Intelligence)
-   - "Case Material & Design": Specific chassis materials (e.g. 100% Recycled CNC Machined Aluminum Unibody with Anodized Finish)
-   - "Thinness / Thickness Measurement": Thickness measurement (e.g. 0.45 inches / 11.5 mm ultra-thin)
-   - "Item Weight": Exact weight (e.g. 3.3 lbs / 1.51 kg)
-   - "Dimensions": Measurements in L x W x H
-   - "Battery Life & Capacity": Runtime in hours and Wh capacity (e.g. Up to 18 hours, 66.5 Wh)
-   - "Ports & Expansion": Complete breakdown of ports (e.g. MagSafe 3, 2x Thunderbolt 4 / USB 4, 3.5mm headphone jack)
-   (Or relevant full hardware attributes for non-computer electronics).
+4. "specifications": Array of { "name": string, "value": string } formatted EXACTLY like this reference specimen:
+   - "Processor": [Exact CPU Model], [Cores (P + E/LPE)] / [Threads], Max Turbo up to [X.X]GHz, [X]MB Cache || NPU: [NPU Name], up to [X] TOPS
+   - "Display": [Size]" [Resolution Name] [Panel Type] ([Width]x[Height]) | [Typical]Nits Typical Brightness, [Peak]Nits Peak Brightness | [Color Gamut e.g. 100% DCI-P3] | [HDR standard] | [Color Calibration] | [Dolby Vision / Finish] | [Certifications]
+   - "Memory and Storage": [RAM Size] [Type/Speed], [Upgradability info] | [Storage Size] [SSD Type], [Max Storage Support]
+   - "OS and Software": [OS Edition & Language] | [Bundled Software & AI Suite]
+   - "Design": [Bezel details] | [X.XX] cm Ultra Thin & [X.XX] kg Light | [Keyboard] | Case Material: [Material (Top), Material (Bottom)]
+   - "Graphics": [GPU Model] | [VRAM & Architecture]
+   - "Battery and Power": [Wh Capacity] | [Charging Speed & Battery Life]
+   - "Connectivity and Audio": [Wi-Fi & Bluetooth] | [Physical Ports Breakdown] | [Speakers & Audio Tech]
+   (Or relevant multi-attribute pipe-separated rows for non-computer electronics).
 5. "comparison": Comparison table comparing this main product with category competitors (or provided extra products), using category-relevant attributes (e.g. for laptops: CPU, RAM, Display, Battery, Weight, Price; for audio: ANC, Battery, Driver, Bluetooth, Price). Include a concise summary verdict.
 6. "faqs": 8-10 high-value FAQs based strictly on actual product data and buyer questions.
 7. "meta_titles": 3 SEO meta title options (50-60 characters each).

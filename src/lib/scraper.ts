@@ -258,28 +258,24 @@ Requirements:
 7. review_count: Approximate review count (integer, e.g. 8500).
 8. image_url: A high-quality direct product image URL (preferably official Amazon CDN or clean manufacturer image).
 9. key_features: Array of 5 to 7 detailed, high-impact feature bullet points directly matching what Amazon shows in "About this item".
-10. specifications: Array of comprehensive technical specifications (objects with "name" and "value").
-CRITICAL REQUIREMENT: For electronics, laptops, computers, monitors, phones, and audio devices, you MUST explicitly include all of the following specific attributes:
-    - "Processor / CPU": Exact processor model, family, architecture, core count, and clock speed (e.g. "Apple M3 chip (8-core CPU with 4 performance cores and 4 efficiency cores, 10-core GPU, 16-core Neural Engine)" or "Intel Core i7-13700H (14 cores, up to 5.0 GHz Turbo)")
-    - "Display Type": Specific panel technology (e.g. "Liquid Retina Display with LED Backlight and True Tone", "OLED Display", "Anti-Glare IPS LCD")
-    - "Screen Size": Exact diagonal measurement and aspect ratio (e.g. "15.3-inch diagonal (16:10 aspect ratio)")
-    - "Screen Resolution & Refresh Rate": Exact pixel dimensions and refresh rate (e.g. "2880 x 1864 native resolution at 224 PPI, 60Hz" or "120Hz ProMotion")
-    - "Display Brightness (Typical)": Standard sustained brightness in nits (e.g. "500 nits typical brightness")
-    - "Peak Brightness": Maximum peak brightness rating in nits (e.g. "500 nits SDR, 1000 nits peak, 1600 nits HDR peak")
-    - "Display HDR Details": Specific HDR formats and color certifications (e.g. "Dolby Vision, HDR10, Wide Color (P3), 1 Billion Colors")
-    - "RAM (Memory) Details": Capacity, memory type, and speed (e.g. "16GB Unified Memory (LPDDR5X-6400, 100GB/s bandwidth)")
-    - "Storage Details": Capacity, drive type, and interface (e.g. "512GB PCIe 4.0 NVMe High-Speed Solid State Drive (SSD)")
-    - "Software / Operating System": Exact pre-installed operating system and software (e.g. "macOS Sonoma (Apple Intelligence ready)" or "Windows 11 Home 64-bit with Microsoft Copilot+")
-    - "Case Material & Design": Exact chassis materials and finish (e.g. "100% Recycled CNC Machined Aluminum Unibody with Anodized Finish")
-    - "Thinness / Thickness Measurement": Exact thickness (e.g. "0.45 inches (11.5 mm) ultra-thin height")
-    - "Item Weight": Exact weight (e.g. "3.3 lbs (1.51 kg)")
-    - "Dimensions": Measurements in L x W x H (e.g. "13.40 x 9.35 x 0.45 inches (34.04 x 23.76 x 1.15 cm)")
-    - "Battery Life & Capacity": Realistic runtimes and watt-hours (e.g. "Up to 18 hours video playback, 15 hours wireless web; 66.5 Wh lithium-polymer")
-    - "Charging Technology": Charger wattage and port (e.g. "35W Dual USB-C Port Compact Power Adapter with MagSafe 3 fast charging")
-    - "Ports & Expansion": Specific port breakdown (e.g. "MagSafe 3 charging port, 2x Thunderbolt 4 / USB 4 ports, 3.5mm headphone jack with high-impedance support")
-    - "Wireless Connectivity": Wi-Fi and Bluetooth specifications (e.g. "Wi-Fi 6E (802.11ax), Bluetooth 5.3")
-    - "Webcam / Camera": Camera sensor and resolution (e.g. "1080p FaceTime HD camera with advanced image signal processor")
-    - "Audio & Speakers": Sound system details (e.g. "Six-speaker sound system with force-cancelling woofers, Spatial Audio, 3-mic array")
+10. specifications: Array of objects with "name" and "value" generated EXACTLY in the following structured specimen format:
+
+TRAINING SPECIMEN TO EMULATE EXACTLY:
+- Processor: Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS
+- Display: 14" WUXGA OLED (1920x1200) | 400Nits Typical Brightness, 600Nits Peak Brightness | 100% DCI-P3 |DisplayHDR True Black 500 | X-Rite | Dolby Vision | Anti Glare |TUV Low Blue Light Certified
+- Memory and Storage: 16GB Soldered LPDDR5x-8533, Mop memory Max Memory Max Memory 16GB soldered memory, not upgradable | 512GB SSD M.2 2242 PCIe 4.0x4 NVMe, Max Storage Support One drive, up to 1TB M.2 2242 SSD
+- OS and Software: Windows 11 Home Single Language, English | Microsoft 365 Basic + Office Home 2024
+- Design: 4 side narrow bezel | 1.39 cm Ultra Thin & 1.19 kg Light | Backlight Keyboard | Case Material: Aluminium (Top), Aluminium (Bottom)
+
+Use these EXACT key names:
+1. "Processor": [Exact CPU Model], [Cores (P + E/LPE)] / [Threads], Max Turbo up to [X.X]GHz, [X]MB Cache || NPU: [NPU Name], up to [X] TOPS
+2. "Display": [Size]" [Resolution Name] [Panel Type] ([Width]x[Height]) | [Typical]Nits Typical Brightness, [Peak]Nits Peak Brightness | [Color Gamut e.g. 100% DCI-P3] | [HDR standard] | [Color Calibration] | [Dolby Vision / Finish] | [Certifications]
+3. "Memory and Storage": [RAM Size] [Type/Speed], [Upgradability info] | [Storage Size] [SSD Type], [Max Storage Support]
+4. "OS and Software": [OS Edition & Language] | [Bundled Software & AI Suite]
+5. "Design": [Bezel details] | [X.XX] cm Ultra Thin & [X.XX] kg Light | [Keyboard] | Case Material: [Material (Top), Material (Bottom)]
+6. "Graphics": [GPU Model] | [VRAM & Architecture]
+7. "Battery and Power": [Wh Capacity] | [Charging Speed & Battery Life]
+8. "Connectivity and Audio": [Wi-Fi & Bluetooth] | [Physical Ports Breakdown] | [Speakers & Audio Tech]
 
 Output ONLY a valid JSON object matching this structure. Do not wrap in markdown code blocks if possible.`;
 

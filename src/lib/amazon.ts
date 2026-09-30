@@ -302,17 +302,100 @@ export const SAMPLE_PRODUCTS: AmazonProduct[] = [
       '1080p FaceTime HD camera, three-mic array, and Spatial Audio sound system',
     ],
     specifications: [
-      { name: 'Processor', value: 'Apple M3 chip (8-core CPU, 10-core GPU, 16-core Neural Engine)' },
-      { name: 'Unified Memory', value: '16GB Unified Memory' },
-      { name: 'Storage', value: '512GB SSD Storage' },
-      { name: 'Display', value: '13.6-inch LED-backlit Liquid Retina (2560 x 1664)' },
-      { name: 'Weight', value: '1.24 kg (2.7 pounds)' },
-      { name: 'Ports', value: 'MagSafe 3, 2x Thunderbolt / USB 4, 3.5mm Headphone Jack' },
-      { name: 'Wireless', value: 'Wi-Fi 6E (802.11ax), Bluetooth 5.3' },
-      { name: 'Operating System', value: 'macOS Sonoma' },
+      {
+        name: 'Processor',
+        value: 'Apple M3 Chip, 8C (4P + 4E) / 8T, Max Turbo up to 4.05GHz, 24MB Unified Cache || NPU: 16-Core Neural Engine, up to 38 TOPS',
+      },
+      {
+        name: 'Display',
+        value: '13.6" WQXGA Liquid Retina IPS (2560x1664) | 500Nits Typical Brightness, 500Nits Peak Brightness | 100% DCI-P3 Wide Color | DisplayHDR / Dolby Vision Support | True Tone Technology | Anti Glare Anti-Reflective | TUV Low Blue Light Certified',
+      },
+      {
+        name: 'Memory and Storage',
+        value: '16GB Soldered Unified Memory LPDDR5-6400 (100GB/s bandwidth), Unified Memory Architecture, not upgradable | 512GB SSD PCIe 4.0x4 NVMe, High-Speed Apple Unified Flash Storage',
+      },
+      {
+        name: 'OS and Software',
+        value: 'macOS Sonoma (pre-installed, lifetime free OS upgrades) | Apple Intelligence Ready + iWork Suite (Pages, Numbers, Keynote)',
+      },
+      {
+        name: 'Design',
+        value: '4 side narrow bezel with 5mm uniform borders | 1.13 cm Ultra Thin & 1.24 kg Light | Backlight Keyboard with Touch ID | Case Material: Aluminium (Top), Aluminium (Bottom)',
+      },
+      {
+        name: 'Graphics',
+        value: 'Integrated Apple 10-Core GPU | Hardware-Accelerated Ray Tracing, Dynamic Caching, Mesh Shading',
+      },
+      {
+        name: 'Battery and Power',
+        value: '66.5Wh Integrated Lithium-Polymer Battery | MagSafe 3 Fast Charging with 35W/70W Adapter (Up to 18 Hours Apple TV playback, 15 Hours Wireless Web)',
+      },
+      {
+        name: 'Connectivity and Audio',
+        value: 'Wi-Fi 6E (802.11ax) + Bluetooth 5.3 | MagSafe 3, 2x Thunderbolt 4 / USB 4 (40Gbps), 3.5mm Headphone Jack with High-Impedance Support | Six-speaker sound system with force-cancelling woofers, Spatial Audio, 3-mic array',
+      },
     ],
     description:
       'The M3 chip brings even greater capabilities to the super-portable 13-inch MacBook Air. Built for Apple Intelligence, it delivers up to 18 hours of battery life and handles demanding workloads with remarkable speed and silent fanless thermal efficiency.',
+    source: 'url',
+  },
+  {
+    id: 'demo-intel-core-ultra-7',
+    asin: 'B0DFV12345',
+    marketplace: 'com',
+    product_name: 'Lenovo Slim 7i Intel Core Ultra 7 256V 14" OLED Laptop',
+    brand: 'Lenovo',
+    model: 'Slim 7i Gen 9',
+    category: 'Computers & Laptops',
+    price: '$1,249.99',
+    rating: 4.8,
+    review_count: 1850,
+    image_url:
+      'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=800&q=80',
+    amazon_url: 'https://www.amazon.com/dp/B0DFV12345',
+    key_features: [
+      'Intel Core Ultra 7 256V Lunar Lake processor with 47 TOPS Integrated NPU',
+      'Stunning 14" WUXGA OLED display with 100% DCI-P3 and DisplayHDR True Black 500',
+      '16GB soldered high-speed LPDDR5x-8533 memory and 512GB PCIe 4.0 SSD',
+      'Ultra thin 1.39 cm profile and 1.19 kg lightweight premium all-aluminum chassis',
+      'Preloaded with Windows 11 Home and Microsoft Office 2024 lifetime license',
+    ],
+    specifications: [
+      {
+        name: 'Processor',
+        value: 'Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS',
+      },
+      {
+        name: 'Display',
+        value: '14" WUXGA OLED (1920x1200) | 400Nits Typical Brightness, 600Nits Peak Brightness | 100% DCI-P3 | DisplayHDR True Black 500 | X-Rite | Dolby Vision | Anti Glare | TUV Low Blue Light Certified',
+      },
+      {
+        name: 'Memory and Storage',
+        value: '16GB Soldered LPDDR5x-8533, Mop memory Max Memory Max Memory 16GB soldered memory, not upgradable | 512GB SSD M.2 2242 PCIe 4.0x4 NVMe, Max Storage Support One drive, up to 1TB M.2 2242 SSD',
+      },
+      {
+        name: 'OS and Software',
+        value: 'Windows 11 Home Single Language, English | Microsoft 365 Basic + Office Home 2024',
+      },
+      {
+        name: 'Design',
+        value: '4 side narrow bezel | 1.39 cm Ultra Thin & 1.19 kg Light | Backlight Keyboard | Case Material: Aluminium (Top), Aluminium (Bottom)',
+      },
+      {
+        name: 'Graphics',
+        value: 'Integrated Intel Arc 140V Graphics | DirectX 12 Ultimate, Ray Tracing, Intel XeSS AI Super Sampling',
+      },
+      {
+        name: 'Battery and Power',
+        value: '70Wh Integrated 4-Cell Li-Polymer Battery | Rapid Charge Boost (Up to 18 Hours Video Playback, 15 min charge for 3 hours use)',
+      },
+      {
+        name: 'Connectivity and Audio',
+        value: 'Wi-Fi 7 (802.11be) 2x2 + Bluetooth 5.4 | 2x Thunderbolt 4 / USB4 40Gbps, 1x USB-A 3.2 Gen 1, 1x HDMI 2.1, 3.5mm Headphone Jack | Stereo Speakers 2x 2W, Dolby Atmos, Dual-Mic Array with AI Noise Cancellation',
+      },
+    ],
+    description:
+      'Engineered for portable AI workflows, the Lenovo Slim 7i pairs Intel Core Ultra 7 256V with 47 TOPS NPU, a vivid 14" OLED panel, and an ultra-thin 1.39 cm aluminum chassis.',
     source: 'url',
   },
   {

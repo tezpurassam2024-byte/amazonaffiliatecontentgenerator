@@ -172,15 +172,15 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({
                   Scraped & Verified
                 </span>
               </div>
-              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-1">
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-1">
                 <table className="w-full text-left text-xs">
                   <tbody className="divide-y divide-slate-200/60">
                     {product.specifications.map((spec, i) => (
                       <tr key={i} className="hover:bg-white transition-colors">
-                        <td className="py-1.5 px-2.5 font-semibold text-slate-700 w-2/5">
+                        <td className="py-2 px-3 font-bold text-slate-800 w-1/4 align-top">
                           {spec.name}
                         </td>
-                        <td className="py-1.5 px-2.5 text-slate-600 w-3/5">
+                        <td className="py-2 px-3 text-slate-700 w-3/4 leading-relaxed font-mono text-[11.5px]">
                           {spec.value}
                         </td>
                       </tr>
