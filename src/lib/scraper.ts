@@ -262,24 +262,30 @@ Requirements:
 7. review_count: Approximate review count (integer, e.g. 8500).
 8. image_url: A high-quality direct product image URL (preferably official Amazon CDN or clean manufacturer image).
 9. key_features: Array of 5 to 7 detailed, high-impact feature bullet points directly matching what Amazon shows in "About this item".
-10. specifications: Array of objects with "name" and "value" generated EXACTLY in the following structured specimen format:
+10. specifications: Array of objects with "name" and "value" generated in consolidated statements with pipe (' | ') separators:
 
-TRAINING SPECIMEN TO EMULATE EXACTLY:
-- Processor: Intel Core Ultra 7 256V, 8C (4P + 4LPE) / 8T, Max Turbo up to 4.8GHz, 12MB Intel Smart Cache || NPU: Integrated Intel AI Boost, up to 47 TOPS
-- Display: 14" WUXGA OLED (1920x1200) | 400Nits Typical Brightness, 600Nits Peak Brightness | 100% DCI-P3 |DisplayHDR True Black 500 | X-Rite | Dolby Vision | Anti Glare |TUV Low Blue Light Certified
-- Memory and Storage: 16GB Soldered LPDDR5x-8533, Mop memory Max Memory Max Memory 16GB soldered memory, not upgradable | 512GB SSD M.2 2242 PCIe 4.0x4 NVMe, Max Storage Support One drive, up to 1TB M.2 2242 SSD
-- OS and Software: Windows 11 Home Single Language, English | Microsoft 365 Basic + Office Home 2024
-- Design: 4 side narrow bezel | 1.39 cm Ultra Thin & 1.19 kg Light | Backlight Keyboard | Case Material: Aluminium (Top), Aluminium (Bottom)
+CRITICAL ECOSYSTEM FIDELITY RULES:
+- For Apple Mac / MacBook laptops:
+  - "Processor": MUST be authentic Apple Silicon (e.g. Apple M3 Pro Chip, 11C (5P + 6E) / 11T, Max Turbo up to 4.05GHz, 36MB Unified Cache | NPU: 16-Core Neural Engine, up to 38 TOPS). NEVER assign Intel Core Ultra, Intel Arc, or Windows to an Apple Mac!
+  - "Display": Authentic Apple Liquid Retina Display (13.6", 14.2", 15.3", or 16.2") with 500-1600 Nits, P3 Wide Color, True Tone. NEVER assign 15.6" 1080p to a MacBook!
+  - "Memory and Storage": Unified Memory (8GB/16GB/24GB/36GB) | Apple Unified Flash Storage (256GB/512GB/1TB).
+  - "OS and Software": macOS (macOS Sonoma / Sequoia).
+  - "Graphics": Apple Integrated GPU (10-Core / 14-Core / 18-Core).
+- For Windows Intel laptops:
+  - "Processor": Corresponding Intel Core Ultra (e.g. Intel Core Ultra 7 256V) or Intel Core i7/i9.
+  - "OS and Software": Windows 11 Home / Pro.
+- For Windows AMD laptops:
+  - "Processor": Corresponding AMD Ryzen (e.g. AMD Ryzen 7 8845HS / 7840HS).
 
-Use these EXACT key names:
-1. "Processor": [Exact CPU Model], [Cores (P + E/LPE)] / [Threads], Max Turbo up to [X.X]GHz, [X]MB Cache || NPU: [NPU Name], up to [X] TOPS
-2. "Display": [Size]" [Resolution Name] [Panel Type] ([Width]x[Height]) | [Typical]Nits Typical Brightness, [Peak]Nits Peak Brightness | [Color Gamut e.g. 100% DCI-P3] | [HDR standard] | [Color Calibration] | [Dolby Vision / Finish] | [Certifications]
-3. "Memory and Storage": [RAM Size] [Type/Speed], [Upgradability info] | [Storage Size] [SSD Type], [Max Storage Support]
-4. "OS and Software": [OS Edition & Language] | [Bundled Software & AI Suite]
-5. "Design": [Bezel details] | [X.XX] cm Ultra Thin & [X.XX] kg Light | [Keyboard] | Case Material: [Material (Top), Material (Bottom)]
+Use these consolidated category names:
+1. "Processor": [Exact CPU/Chip Model], [Cores (P + E)] / [Threads], Clock Speed, Cache | NPU: [NPU Name], up to [X] TOPS
+2. "Display": [Size]" [Panel Type] ([Resolution]) | [Brightness Nits] | [Color Gamut] | [HDR standard] | [Finishing & Certifications]
+3. "Memory and Storage": [RAM details] | [SSD details]
+4. "OS and Software": [OS Name & Edition] | [Bundled Software Suite]
+5. "Design": [Bezel] | [Thickness cm] & [Weight kg] | [Keyboard] | Case Material: [Materials]
 6. "Graphics": [GPU Model] | [VRAM & Architecture]
-7. "Battery and Power": [Wh Capacity] | [Charging Speed & Battery Life]
-8. "Connectivity and Audio": [Wi-Fi & Bluetooth] | [Physical Ports Breakdown] | [Speakers & Audio Tech]
+7. "Battery": [Capacity Wh] | [Charging Speed & Battery Life]
+8. "Connectivity": [Wi-Fi & Bluetooth] | [Physical Ports Breakdown] | [Audio]
 
 Output ONLY a valid JSON object matching this structure. Do not wrap in markdown code blocks if possible.`;
 
