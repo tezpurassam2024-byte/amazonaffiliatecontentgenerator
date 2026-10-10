@@ -101,15 +101,34 @@ export const GeneratorPage: React.FC<GeneratorPageProps> = ({
     setGenerationError(null);
 
     try {
-      const response = await fetch('/.netlify/functions/generate-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product,
-          options,
-          extraComparisonProducts,
-        }),
-      });
+      const endpoints = ['/api/generate-content', '/.netlify/functions/generate-content'];
+      let response: globalThis.Response | null = null;
+      let lastError: any = null;
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product,
+              options,
+              extraComparisonProducts,
+            }),
+          });
+          if (res.status === 404) {
+            continue;
+          }
+          response = res;
+          break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      if (!response) {
+        throw new Error(lastError?.message || 'Failed to reach content generation endpoint.');
+      }
 
       const result = await response.json();
       if (!response.ok || !result.success) {

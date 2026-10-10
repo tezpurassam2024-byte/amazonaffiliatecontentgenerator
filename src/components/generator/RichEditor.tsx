@@ -49,17 +49,34 @@ export const RichEditor: React.FC<RichEditorProps> = ({
     setActiveAction(action);
 
     try {
-      const res = await fetch('/.netlify/functions/refine-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sectionText: value,
-          action,
-          productName,
-          writingStyle,
-          keywords,
-        }),
-      });
+      const endpoints = ['/api/refine-content', '/.netlify/functions/refine-content'];
+      let res: globalThis.Response | null = null;
+      let lastErr: any = null;
+
+      for (const ep of endpoints) {
+        try {
+          const r = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sectionText: value,
+              action,
+              productName,
+              writingStyle,
+              keywords,
+            }),
+          });
+          if (r.status === 404) continue;
+          res = r;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+
+      if (!res) {
+        throw new Error(lastErr?.message || 'Refine endpoint unavailable.');
+      }
 
       const data = await res.json();
       if (data.success && data.refinedText) {

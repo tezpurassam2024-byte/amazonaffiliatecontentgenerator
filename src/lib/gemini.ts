@@ -9,14 +9,22 @@ import {
 import { ensureComprehensiveDeviceSpecs } from './specsEnricher';
 
 /**
- * Robust API key detection across supported environment variable names
+ * Robust API key detection across supported environment variable names and edge runtimes
  */
-export function getGeminiApiKey(): string {
+export function getGeminiApiKey(explicitKey?: string): string {
+  if (explicitKey && explicitKey.trim()) {
+    return explicitKey.trim();
+  }
+  const procEnv = typeof process !== 'undefined' && process && process.env ? process.env : {};
+  const globalEnv = typeof globalThis !== 'undefined' ? (globalThis as any) : {};
   const key =
-    process.env.GEMINI_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.API_KEY ||
-    process.env.GOOGLE_GENAI_API_KEY ||
+    procEnv.GEMINI_API_KEY ||
+    procEnv.GOOGLE_API_KEY ||
+    procEnv.API_KEY ||
+    procEnv.GOOGLE_GENAI_API_KEY ||
+    globalEnv.GEMINI_API_KEY ||
+    globalEnv.GOOGLE_API_KEY ||
+    globalEnv.API_KEY ||
     '';
   return key.trim();
 }
@@ -24,8 +32,8 @@ export function getGeminiApiKey(): string {
 /**
  * Server-side GoogleGenAI client initialization
  */
-export function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = getGeminiApiKey();
+export function getGeminiClient(explicitKey?: string): GoogleGenAI | null {
+  const apiKey = getGeminiApiKey(explicitKey);
   if (!apiKey) {
     return null;
   }

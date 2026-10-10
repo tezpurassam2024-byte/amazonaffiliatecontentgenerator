@@ -139,15 +139,32 @@ export const GeneratedContentTabs: React.FC<GeneratedContentTabsProps> = ({
     setRegeneratingSection(sectionKey);
 
     try {
-      const res = await fetch('/.netlify/functions/regenerate-section', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          section: sectionKey,
-          product,
-          options,
-        }),
-      });
+      const endpoints = ['/api/regenerate-section', '/.netlify/functions/regenerate-section'];
+      let res: globalThis.Response | null = null;
+      let lastErr: any = null;
+
+      for (const ep of endpoints) {
+        try {
+          const r = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              section: sectionKey,
+              product,
+              options,
+            }),
+          });
+          if (r.status === 404) continue;
+          res = r;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+
+      if (!res) {
+        throw new Error(lastErr?.message || 'Regenerate endpoint unavailable.');
+      }
 
       const data = await res.json();
       if (data.success && data.sectionData) {
